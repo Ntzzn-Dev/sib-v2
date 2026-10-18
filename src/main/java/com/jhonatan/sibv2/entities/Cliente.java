@@ -2,7 +2,6 @@ package com.jhonatan.sibv2.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -10,14 +9,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
 @NoArgsConstructor
 @Data
 public class Cliente extends Pessoas{
-
-    public void showProp(){
-        super.showPessoa();
-    }
 
     public void copyFrom(Cliente client){
         this.setCpfPessoa(client.getCpfPessoa());

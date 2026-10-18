@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.util.Scanner;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -18,21 +18,8 @@ import java.util.Scanner;
 public class Funcionario extends Pessoas{
     @Column(name = "salario_funcionario")
     private double salarioFunc;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String senha;
-
-    public boolean validarSenha(Scanner entrada){
-        System.out.println("SENHA: ");
-        String senha = entrada.nextLine();
-        boolean validada = this.senha == senha;
-        
-        if(!validada) System.out.println("Senha incorreta!");
-        return validada;
-    }
-
-    public void showFunc(){
-        super.showPessoa();
-        System.out.println("> SALARIO: " + this.getSalarioFunc());
-    }
 
     public void copyFrom(Funcionario func){
         this.setCpfPessoa(func.getCpfPessoa());

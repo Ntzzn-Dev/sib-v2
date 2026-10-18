@@ -1,25 +1,68 @@
-# SIB - v2
+# SIB v2
 
-**Projeto:** SIB - v2  
-**Autor:** Jhonatan  
-**GitHub:** [https://github.com/Ntzzn-Dev](https://github.com/Ntzzn-Dev)  
-**Data:** 30/08/2026  
-![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![JDK](https://img.shields.io/badge/JDK-25-007396?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-## Descrição
+API REST em Spring Boot que traz os cadastros e os fluxos de venda do projeto CLI `brechoSIB`. Os dados são persistidos por JPA. A configuração atual usa H2 para desenvolvimento; o projeto também inclui o driver PostgreSQL.
 
-Um programa criado com intuito de estudo e conclusão do projeto de extensão de curso de Informática para negócios da Fatec.  
-O Sistema serve como um suporte para vendas de um brechó.  
-O projeto contará com uso do SQL Server como banco de dados.  
-O projeto contará com uso do angular como frontend.
+## Executar
 
-## Tecnologias
-- Java Spring boot 4.1.1
-- JPA
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-## Contribuição
-Sinta-se à vontade para abrir issues ou sugerir melhorias!
+A API fica disponível em `http://localhost:8080/api`. Requisições e respostas usam JSON. Códigos inexistentes retornam 404, dados inválidos retornam 400 e credenciais inválidas retornam 401. CORS está habilitado para permitir integração com o frontend durante o desenvolvimento.
 
-## Log de versões
-- **v2.0** → Versão inicial criando entidades
+## Recursos
+
+Todos os cadastros abaixo aceitam `GET` para listar, `GET /{id}` para consultar, `POST` para criar, `PUT /{id}` para editar e `DELETE /{id}` para remover. As listas aceitam busca textual opcional com `?q=termo`.
+
+| Recurso | Rota | Identificador |
+|---|---|---|
+| Endereços | `/api/enderecos` | `codEnd` |
+| Funcionários | `/api/funcionarios` | CPF |
+| Clientes | `/api/clientes` | CPF |
+| Métodos de pagamento | `/api/metodos-pagamento` | `codMetodoPag` |
+| Marcas | `/api/marcas` | `codMarca` |
+| Categorias | `/api/categorias` | `codCat` |
+| Produtos | `/api/produtos` | `codProd` |
+
+CPF pode ser enviado com ou sem pontuação e é armazenado no formato `000.000.000-00`. CEP aceita oito dígitos com ou sem hífen. O tamanho do produto segue as opções aceitas no CLI. Em payloads de produto, `marcaProd` e `catProd` recebem objetos com seus identificadores; em cliente/funcionário, `endPessoa` recebe `{ "codEnd": 1 }` (ou `null`). A senha de funcionário é aceita na escrita e nunca aparece nas respostas.
+
+Exemplos de payloads:
+
+```json
+POST /api/funcionarios
+{
+  "cpfPessoa": "12345678901",
+  "nomePessoa": "João Silva",
+  "telPessoa": "11999999999",
+  "endPessoa": { "codEnd": 1 },
+  "salarioFunc": 2500.0,
+  "senha": "senha"
+}
+```
+
+```json
+POST /api/produtos
+{
+  "descProd": "Camiseta básica branca",
+  "tamanhoProd": "M",
+  "marcaProd": { "codMarca": 1 },
+  "catProd": { "codCat": 1 },
+  "precoProd": 100.0
+}
+```
+
+## Autenticação e vendas
+
+`POST /api/auth/login` recebe `{ "cpf": "12345678901", "senha": "senha" }` e retorna CPF e nome do funcionário autenticado. O frontend envia o CPF do funcionário ao criar a venda; a API ainda não emite token de sessão.
+
+| Operação | Rota | Corpo |
+|---|---|---|
+| Criar venda em aberto | `POST /api/vendas` | `{ "clienteCpf": "...", "funcionarioCpf": "..." }` |
+| Adicionar produtos | `POST /api/vendas/{id}/produtos` | `{ "codigos": [1, 2] }` |
+| Pagar venda | `POST /api/vendas/{id}/pagamentos` | `[{ "metodoPagamentoId": 1, "valorPago": 50.0 }]` |
+| Cancelar venda aberta | `POST /api/vendas/{id}/cancelamento` | sem corpo |
+| Listar/filtrar vendas | `GET /api/vendas?status=0&q=termo` | — |
+| Consultar venda e detalhes | `GET /api/vendas/{id}` | — |
+
+Status da venda: `0` em aberto, `1` paga, `2` cancelada. O pagamento aceita parcelas em métodos ativos, limita automaticamente uma parcela ao saldo restante e só conclui quando o total foi coberto. Produtos adicionados ficam marcados como vendidos, como no CLI. A venda paga ou cancelada não pode ser alterada.
+

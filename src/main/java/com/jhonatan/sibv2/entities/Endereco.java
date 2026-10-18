@@ -51,8 +51,4 @@ public class Endereco {
            this.getUf().toUpperCase().contains(termo.toUpperCase());
     }
 
-    public void showProp(){
-        System.out.println(
-            "CÓDIGO: " + this.getCodEnd() + " > " + this.getBairro() + ", " + this.getLogradouro() + ", " + this.getNumero() + "-" + this.getComplemento() + "\n[" + this.getUf() + "] " + this.getCidade() + ", " + this.getCep());
-    }
 }

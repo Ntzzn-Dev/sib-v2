@@ -8,6 +8,7 @@ public class SibV2Application {
 
     public static void main(String[] args) {
         SpringApplication.run(SibV2Application.class, args);
+        System.out.println("=======\nlocalhost: 8080\n=======");
     }
 
 }

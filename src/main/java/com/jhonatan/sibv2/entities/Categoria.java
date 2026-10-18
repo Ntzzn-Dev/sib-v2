@@ -20,11 +20,6 @@ public class Categoria {
     @Column (name="nome_categoria", length=30, nullable=false)
     private String nomeCat;
 
-    public void showProp(){
-        System.out.println(
-            "CÓDIGO: " + this.getCodCat() + " > " + this.getNomeCat());
-    }
-
     public boolean searchByTerm(String termo) {
         return this.getNomeCat().toUpperCase().contains(termo.toUpperCase());
     }

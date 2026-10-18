@@ -29,13 +29,6 @@ public class Produto {
     @Column(name = "preco_produto")
     private double precoProd;
 
-    public void showProp(){
-        System.out.println(
-            "CÓDIGO: " + this.getCodProd() + " > " + this.getMarcaProd().getNomeMarca() + " - " + 
-            this.getMarcaProd().getNomeMarca() + "\n[" + this.getTamanhoProd() + "] " + this.getCatProd().getNomeCat() + 
-            ", R$: " + this.getPrecoProd() + "\nproduto " + (this.isSelled() ? "vendido" : "disponível"));
-    }
-
     public void copyFrom(Produto prod){
         this.setCodProd(prod.getCodProd());
         this.setDescProd(prod.getDescProd());

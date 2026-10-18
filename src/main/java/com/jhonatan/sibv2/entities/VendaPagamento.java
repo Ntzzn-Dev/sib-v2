@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table
@@ -11,21 +12,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class VendaPagamento {
-    @Id //Mudar isso
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long codVendaPagamento;
+
     @ManyToOne
     @JoinColumn(name = "venda_id")
+    @JsonIgnore
     private Venda venda;
 
     @ManyToOne
     @JoinColumn(name = "metodo_pagamento_id")
     private MetodoPagamento metodoPagamento;
     private double valorPago;
-
-    public void showVendaPag(){
-        System.out.println(
-            "Método:     " + this.getMetodoPagamento().getDescMetodoPag() + 
-            "\nParcela R$: " + String.format("%.2f", this.getValorPago()));
-    }
 
     public void copyFrom(VendaPagamento vdPg){
         this.setMetodoPagamento(vdPg.getMetodoPagamento());

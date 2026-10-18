@@ -59,19 +59,6 @@ public class Venda {
         };
     }
 
-    public void showVenda(){
-        String codV = String.valueOf(this.getCodVenda());
-        boolean cancelada = this.getStatus() == 2;
-
-//        System.out.println(
-//            "Código: " + codV + Formatacao.alinharDireita(this.getDataVenda(), 28 - codV.length()) +
-//            "\nCliente: " + Formatacao.alinharDireita(this.getClienteVenda().getNomePessoa(), 27) +
-//            "\nFuncionário: " + Formatacao.alinharDireita(this.getFuncVenda().getNomePessoa(), 23) +
-//            "\n====================================" +
-//            "\nTOTAL: " + Formatacao.alinharDireita("R$" + String.format("%.2f", this.getValorTotal()), 29) +
-//            "\nSTATUS: " + (cancelada ? Formatacao.alinharDireita(this.getStatusString(), 28, "x") : Formatacao.alinharDireita(this.getStatusString(), 28)));
-    }
-
     public void copyFrom(Venda venda){
         this.setCodVenda(venda.getCodVenda());
         this.setDataVenda(venda.getDataVenda());

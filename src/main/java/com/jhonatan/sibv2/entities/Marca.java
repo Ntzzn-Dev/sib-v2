@@ -16,11 +16,6 @@ public class Marca {
     private int codMarca;
     private String nomeMarca;
     
-    public void showMarca(){
-        System.out.println(
-            "CÓDIGO: " + this.getCodMarca() + " > " + this.getNomeMarca());
-    }
-
     public void copyFrom(Marca marca){
         this.setCodMarca(marca.getCodMarca());
         this.setNomeMarca(marca.getNomeMarca());

@@ -20,11 +20,6 @@ public class MetodoPagamento {
     @Column(name = "is_active_metodo_pagamento")
     private boolean isActiveMetodoPag = true;
 
-    public void showMetodoPag(){
-        System.out.println(
-            "CÓDIGO: " + this.getCodMetodoPag() + " > " + this.getDescMetodoPag() + ", " + (this.isActiveMetodoPag() ? "ativo" : "desativado"));
-    }
-
     public void copyFrom(MetodoPagamento mtd){
         this.setCodMetodoPag(mtd.getCodMetodoPag());
         this.setDescMetodoPag(mtd.getDescMetodoPag());
