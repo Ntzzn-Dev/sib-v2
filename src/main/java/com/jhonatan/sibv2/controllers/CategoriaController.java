@@ -1,50 +1,48 @@
 package com.jhonatan.sibv2.controllers;
 
-import com.jhonatan.sibv2.entities.Categoria;
-import com.jhonatan.sibv2.repositories.CategoriaRepository;
+import com.jhonatan.sibv2.dto.requests.CategoriaRequest;
+import com.jhonatan.sibv2.dto.responses.CategoriaResponse;
+import com.jhonatan.sibv2.services.CategoriaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.jhonatan.sibv2.controllers.ApiSupport.*;
 
 @RestController
 @RequestMapping("/api/categorias")
 @CrossOrigin
 public class CategoriaController {
 
-    private final CategoriaRepository categorias;
+    private final CategoriaService categorias;
 
-    public CategoriaController(CategoriaRepository categorias) {
+    public CategoriaController(CategoriaService categorias) {
         this.categorias = categorias;
     }
 
     @GetMapping
-    public List<Categoria> listar(@RequestParam(required = false) String q) {
-        return filter(categorias.findAll(), q, categoria -> has(categoria.getNomeCat(), q));
+    public List<CategoriaResponse> listar(@RequestParam(required = false) String q) {
+        return categorias.listar(q);
     }
 
     @GetMapping("/{id}")
-    public Categoria buscar(@PathVariable int id) {
-        return required(categorias, id, "Categoria");
+    public CategoriaResponse buscar(@PathVariable int id) {
+        return categorias.buscar(id);
     }
 
     @PostMapping
-    public Categoria criar(@RequestBody Categoria categoria) {
-        categoria.setCodCat(0);
-        return categorias.save(categoria);
+    public CategoriaResponse criar(@RequestBody CategoriaRequest request) {
+        return categorias.criar(request);
     }
 
     @PutMapping("/{id}")
-    public Categoria editar(@PathVariable int id, @RequestBody Categoria dados) {
-        Categoria categoria = required(categorias, id, "Categoria");
-        categoria.setNomeCat(dados.getNomeCat());
-        return categorias.save(categoria);
+    public CategoriaResponse editar(@PathVariable int id, @RequestBody CategoriaRequest request) {
+        return categorias.editar(id, request);
     }
 
-    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void apagar(@PathVariable int id) {
-        categorias.delete(required(categorias, id, "Categoria"));
+        categorias.apagar(id);
     }
 }

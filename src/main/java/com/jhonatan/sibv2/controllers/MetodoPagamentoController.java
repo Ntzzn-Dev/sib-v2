@@ -1,52 +1,48 @@
 package com.jhonatan.sibv2.controllers;
 
-import com.jhonatan.sibv2.entities.MetodoPagamento;
-import com.jhonatan.sibv2.repositories.MetodoPagamentoRepository;
+import com.jhonatan.sibv2.dto.requests.MetodoPagamentoRequest;
+import com.jhonatan.sibv2.dto.responses.MetodoPagamentoResponse;
+import com.jhonatan.sibv2.services.MetodoPagamentoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.jhonatan.sibv2.controllers.ApiSupport.*;
 
 @RestController
 @RequestMapping("/api/metodos-pagamento")
 @CrossOrigin
 public class MetodoPagamentoController {
 
-    private final MetodoPagamentoRepository metodos;
+    private final MetodoPagamentoService metodos;
 
-    public MetodoPagamentoController(MetodoPagamentoRepository metodos) {
+    public MetodoPagamentoController(MetodoPagamentoService metodos) {
         this.metodos = metodos;
     }
 
     @GetMapping
-    public List<MetodoPagamento> listar(@RequestParam(required = false) String q) {
-        return filter(metodos.findAll(), q, m -> has(m.getDescMetodoPag(), q)
-                || has(m.isActiveMetodoPag() ? "ativo" : "desativado", q));
+    public List<MetodoPagamentoResponse> listar(@RequestParam(required = false) String q) {
+        return metodos.listar(q);
     }
 
     @GetMapping("/{id}")
-    public MetodoPagamento buscar(@PathVariable int id) {
-        return required(metodos, id, "Método de pagamento");
+    public MetodoPagamentoResponse buscar(@PathVariable int id) {
+        return metodos.buscar(id);
     }
 
     @PostMapping
-    public MetodoPagamento criar(@RequestBody MetodoPagamento metodo) {
-        metodo.setCodMetodoPag(0);
-        return metodos.save(metodo);
+    public MetodoPagamentoResponse criar(@RequestBody MetodoPagamentoRequest request) {
+        return metodos.criar(request);
     }
 
     @PutMapping("/{id}")
-    public MetodoPagamento editar(@PathVariable int id, @RequestBody MetodoPagamento dados) {
-        MetodoPagamento metodo = required(metodos, id, "Método de pagamento");
-        metodo.setDescMetodoPag(dados.getDescMetodoPag());
-        metodo.setActiveMetodoPag(dados.isActiveMetodoPag());
-        return metodos.save(metodo);
+    public MetodoPagamentoResponse editar(@PathVariable int id, @RequestBody MetodoPagamentoRequest request) {
+        return metodos.editar(id, request);
     }
 
-    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void apagar(@PathVariable int id) {
-        metodos.delete(required(metodos, id, "Método de pagamento"));
+        metodos.apagar(id);
     }
 }

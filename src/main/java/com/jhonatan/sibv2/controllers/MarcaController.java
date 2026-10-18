@@ -1,50 +1,46 @@
 package com.jhonatan.sibv2.controllers;
 
-import com.jhonatan.sibv2.entities.Marca;
-import com.jhonatan.sibv2.repositories.MarcaRepository;
+import com.jhonatan.sibv2.dto.requests.MarcaRequest;
+import com.jhonatan.sibv2.dto.responses.MarcaResponse;
+import com.jhonatan.sibv2.services.MarcaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.jhonatan.sibv2.controllers.ApiSupport.*;
-
 @RestController
 @RequestMapping("/api/marcas")
 @CrossOrigin
 public class MarcaController {
+    private final MarcaService marcas;
 
-    private final MarcaRepository marcas;
-
-    public MarcaController(MarcaRepository marcas) {
+    public MarcaController(MarcaService marcas) {
         this.marcas = marcas;
     }
 
     @GetMapping
-    public List<Marca> listar(@RequestParam(required = false) String q) {
-        return filter(marcas.findAll(), q, marca -> has(marca.getNomeMarca(), q));
+    public List<MarcaResponse> listar(@RequestParam(required = false) String q) {
+        return marcas.listar(q);
     }
 
     @GetMapping("/{id}")
-    public Marca buscar(@PathVariable int id) {
-        return required(marcas, id, "Marca");
+    public MarcaResponse buscar(@PathVariable int id) {
+        return marcas.buscar(id);
     }
 
     @PostMapping
-    public Marca criar(@RequestBody Marca marca) {
-        marca.setCodMarca(0);
-        return marcas.save(marca);
+    public MarcaResponse criar(@RequestBody MarcaRequest request) {
+        return marcas.criar(request);
     }
 
     @PutMapping("/{id}")
-    public Marca editar(@PathVariable int id, @RequestBody Marca dados) {
-        Marca marca = required(marcas, id, "Marca");
-        marca.setNomeMarca(dados.getNomeMarca());
-        return marcas.save(marca);
+    public MarcaResponse editar(@PathVariable int id, @RequestBody MarcaRequest request) {
+        return marcas.editar(id, request);
     }
 
-    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void apagar(@PathVariable int id) {
-        marcas.delete(required(marcas, id, "Marca"));
+        marcas.apagar(id);
     }
 }

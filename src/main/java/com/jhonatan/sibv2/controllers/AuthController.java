@@ -1,36 +1,33 @@
 package com.jhonatan.sibv2.controllers;
 
-import com.jhonatan.sibv2.entities.Funcionario;
-import com.jhonatan.sibv2.repositories.FuncionarioRepository;
-import org.springframework.http.HttpStatus;
+import com.jhonatan.sibv2.dto.requests.LoginRequest;
+import com.jhonatan.sibv2.dto.requests.CadastroRequest;
+import com.jhonatan.sibv2.dto.responses.FuncionarioResponse;
+import com.jhonatan.sibv2.dto.responses.LoginResponse;
+import com.jhonatan.sibv2.services.AuthService;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Map;
-
-import static com.jhonatan.sibv2.controllers.ApiSupport.cpf;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin
 public class AuthController {
-    private final FuncionarioRepository funcionarios;
+    private final AuthService auth;
 
-    public AuthController(FuncionarioRepository funcionarios) { this.funcionarios = funcionarios; }
-
-    @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody LoginRequest request) {
-        String id = cpf(request.cpf());
-        Funcionario funcionario = funcionarios.findByCpfPessoaAndSenha(id, request.senha())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Usuário ou senha não encontrados"));
-        return Map.of("cpfPessoa", funcionario.getCpfPessoa(), "nomePessoa", funcionario.getNomePessoa(),
-                "message", "Login realizado");
+    public AuthController(AuthService auth) {
+        this.auth = auth;
     }
 
-    public record LoginRequest(String cpf, String senha) {}
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody LoginRequest request) {
+        return auth.login(request);
+    }
+
+    @PostMapping("/cadastro")
+    public FuncionarioResponse cadastrar(@RequestBody CadastroRequest request) {
+        return auth.cadastrar(request);
+    }
 }
