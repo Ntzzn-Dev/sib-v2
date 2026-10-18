@@ -1,7 +1,6 @@
 package com.jhonatan.sibv2.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,7 +8,6 @@ import lombok.NoArgsConstructor;
 @Table
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Endereco {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

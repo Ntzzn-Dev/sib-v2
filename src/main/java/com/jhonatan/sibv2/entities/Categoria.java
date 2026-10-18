@@ -1,7 +1,6 @@
 package com.jhonatan.sibv2.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -9,7 +8,6 @@ import lombok.NonNull;
 @Entity
 @Table(name = "categoria")
 @NoArgsConstructor
-@AllArgsConstructor
 @Data
 public class Categoria {
     @Id
