@@ -2,6 +2,8 @@ package com.jhonatan.sibv2.controllers;
 
 import com.jhonatan.sibv2.dto.requests.EnderecoRequest;
 import com.jhonatan.sibv2.dto.responses.EnderecoResponse;
+import com.jhonatan.sibv2.dto.responses.CepConsultaResponse;
+import com.jhonatan.sibv2.services.ConsultaCepService;
 import com.jhonatan.sibv2.services.EnderecoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +16,11 @@ import java.util.List;
 public class EnderecoController {
 
     private final EnderecoService enderecos;
+    private final ConsultaCepService consultaCep;
 
-    public EnderecoController(EnderecoService enderecos) {
+    public EnderecoController(EnderecoService enderecos, ConsultaCepService consultaCep) {
         this.enderecos = enderecos;
+        this.consultaCep = consultaCep;
     }
 
     @GetMapping
@@ -27,6 +31,11 @@ public class EnderecoController {
     @GetMapping("/{id}")
     public EnderecoResponse buscar(@PathVariable int id) {
         return enderecos.buscar(id);
+    }
+
+    @GetMapping("/cep/{cep}")
+    public CepConsultaResponse consultarCep(@PathVariable String cep) {
+        return consultaCep.buscar(cep);
     }
 
     @PostMapping

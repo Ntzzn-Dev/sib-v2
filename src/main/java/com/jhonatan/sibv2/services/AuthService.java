@@ -7,6 +7,7 @@ import com.jhonatan.sibv2.dto.responses.FuncionarioResponse;
 import com.jhonatan.sibv2.dto.responses.LoginResponse;
 import com.jhonatan.sibv2.entities.Funcionario;
 import com.jhonatan.sibv2.repositories.FuncionarioRepository;
+import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,7 +23,7 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        String cpf = formatarCpf(request.getCpf());
+        String cpf = FormatadorDocumento.formatarCpf(request.getCpf());
         Funcionario funcionario = funcionarios.findByCpfPessoaAndSenha(cpf, request.getSenha())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Usuário ou senha não encontrados"));
@@ -45,12 +46,4 @@ public class AuthService {
         return funcionarioService.criar(funcionario);
     }
 
-    private String formatarCpf(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if (digits.length() != 11) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF inválido: informe 11 dígitos");
-        }
-        return digits.substring(0, 3) + "." + digits.substring(3, 6) + "."
-                + digits.substring(6, 9) + "-" + digits.substring(9);
-    }
 }

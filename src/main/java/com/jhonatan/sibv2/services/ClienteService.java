@@ -4,6 +4,7 @@ import com.jhonatan.sibv2.dto.requests.ClienteRequest;
 import com.jhonatan.sibv2.dto.responses.ClienteResponse;
 import com.jhonatan.sibv2.entities.Cliente;
 import com.jhonatan.sibv2.repositories.ClienteRepository;
+import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,24 +30,24 @@ public class ClienteService {
     }
 
     public ClienteResponse buscar(String cpf) {
-        return resposta(buscarEntidadeObrigatoria(formatarCpf(cpf)));
+        return resposta(buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf)));
     }
 
     public ClienteResponse criar(ClienteRequest request) {
         Cliente cliente = new Cliente();
-        cliente.setCpfPessoa(formatarCpf(request.getCpfPessoa()));
+        cliente.setCpfPessoa(FormatadorDocumento.formatarCpf(request.getCpfPessoa()));
         aplicarDados(cliente, request);
         return resposta(clientes.save(cliente));
     }
 
     public ClienteResponse editar(String cpf, ClienteRequest request) {
-        Cliente cliente = buscarEntidadeObrigatoria(formatarCpf(cpf));
+        Cliente cliente = buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf));
         aplicarDados(cliente, request);
         return resposta(clientes.save(cliente));
     }
 
     public void apagar(String cpf) {
-        clientes.delete(buscarEntidadeObrigatoria(formatarCpf(cpf)));
+        clientes.delete(buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf)));
     }
 
     public Cliente buscarEntidadeObrigatoria(String cpf) {
@@ -58,15 +59,6 @@ public class ClienteService {
         cliente.setNomePessoa(request.getNomePessoa());
         cliente.setTelPessoa(request.getTelPessoa());
         cliente.setEndPessoa(enderecos.buscarReferencia(request.getEndPessoa()));
-    }
-
-    private String formatarCpf(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if (digits.length() != 11) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF inválido: informe 11 dígitos");
-        }
-        return digits.substring(0, 3) + "." + digits.substring(3, 6) + "."
-                + digits.substring(6, 9) + "-" + digits.substring(9);
     }
 
     private boolean corresponde(Cliente cliente, String q) {

@@ -7,6 +7,7 @@ import com.jhonatan.sibv2.dto.responses.VendaPagamentoResponse;
 import com.jhonatan.sibv2.dto.responses.VendaResponse;
 import com.jhonatan.sibv2.entities.*;
 import com.jhonatan.sibv2.repositories.VendaRepository;
+import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,8 +56,10 @@ public class VendaService {
     public VendaResponse criar(CriarVendaRequest request) {
         Venda venda = new Venda();
         venda.setDataVenda(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")));
-        venda.setClienteVenda(clientes.buscarEntidadeObrigatoria(formatarCpf(request.getClienteCpf())));
-        venda.setFuncVenda(funcionarios.buscarEntidadeObrigatoria(formatarCpf(request.getFuncionarioCpf())));
+        venda.setClienteVenda(clientes.buscarEntidadeObrigatoria(
+                FormatadorDocumento.formatarCpf(request.getClienteCpf())));
+        venda.setFuncVenda(funcionarios.buscarEntidadeObrigatoria(
+                FormatadorDocumento.formatarCpf(request.getFuncionarioCpf())));
         return mapearResposta(vendas.save(venda));
     }
 
@@ -147,15 +150,6 @@ public class VendaService {
         if (venda.getStatus() == 2) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Venda já está cancelada");
         }
-    }
-
-    private String formatarCpf(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if (digits.length() != 11) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF inválido: informe 11 dígitos");
-        }
-        return digits.substring(0, 3) + "." + digits.substring(3, 6) + "."
-                + digits.substring(6, 9) + "-" + digits.substring(9);
     }
 
     private boolean corresponde(Venda venda, String q) {

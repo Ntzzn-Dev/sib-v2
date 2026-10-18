@@ -4,6 +4,7 @@ import com.jhonatan.sibv2.dto.requests.EnderecoRequest;
 import com.jhonatan.sibv2.dto.responses.EnderecoResponse;
 import com.jhonatan.sibv2.entities.Endereco;
 import com.jhonatan.sibv2.repositories.EnderecoRepository;
+import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -67,20 +68,12 @@ public class EnderecoService {
         }
 
         endereco.setUf(uf);
-        endereco.setCep(formatarCep(request.getCep()));
+        endereco.setCep(FormatadorDocumento.formatarCep(request.getCep()));
         endereco.setCidade(request.getCidade());
         endereco.setBairro(request.getBairro());
         endereco.setLogradouro(request.getLogradouro());
         endereco.setNumero(request.getNumero());
         endereco.setComplemento(request.getComplemento());
-    }
-
-    private String formatarCep(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if (digits.length() != 8) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido: informe 8 dígitos");
-        }
-        return digits.substring(0, 5) + "-" + digits.substring(5);
     }
 
     private boolean corresponde(Endereco endereco, String q) {

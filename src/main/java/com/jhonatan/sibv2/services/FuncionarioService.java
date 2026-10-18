@@ -4,6 +4,7 @@ import com.jhonatan.sibv2.dto.requests.FuncionarioRequest;
 import com.jhonatan.sibv2.dto.responses.FuncionarioResponse;
 import com.jhonatan.sibv2.entities.Funcionario;
 import com.jhonatan.sibv2.repositories.FuncionarioRepository;
+import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,24 +30,24 @@ public class FuncionarioService {
     }
 
     public FuncionarioResponse buscar(String cpf) {
-        return resposta(buscarEntidadeObrigatoria(formatarCpf(cpf)));
+        return resposta(buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf)));
     }
 
     public FuncionarioResponse criar(FuncionarioRequest request) {
         Funcionario funcionario = new Funcionario();
-        funcionario.setCpfPessoa(formatarCpf(request.getCpfPessoa()));
+        funcionario.setCpfPessoa(FormatadorDocumento.formatarCpf(request.getCpfPessoa()));
         aplicarDados(funcionario, request);
         return resposta(funcionarios.save(funcionario));
     }
 
     public FuncionarioResponse editar(String cpf, FuncionarioRequest request) {
-        Funcionario funcionario = buscarEntidadeObrigatoria(formatarCpf(cpf));
+        Funcionario funcionario = buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf));
         aplicarDados(funcionario, request);
         return resposta(funcionarios.save(funcionario));
     }
 
     public void apagar(String cpf) {
-        funcionarios.delete(buscarEntidadeObrigatoria(formatarCpf(cpf)));
+        funcionarios.delete(buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf)));
     }
 
     public Funcionario buscarEntidadeObrigatoria(String cpf) {
@@ -62,15 +63,6 @@ public class FuncionarioService {
         if (request.getSenha() != null && !request.getSenha().isBlank()) {
             funcionario.setSenha(request.getSenha());
         }
-    }
-
-    private String formatarCpf(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if (digits.length() != 11) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF inválido: informe 11 dígitos");
-        }
-        return digits.substring(0, 3) + "." + digits.substring(3, 6) + "."
-                + digits.substring(6, 9) + "-" + digits.substring(9);
     }
 
     private boolean corresponde(Funcionario funcionario, String q) {
