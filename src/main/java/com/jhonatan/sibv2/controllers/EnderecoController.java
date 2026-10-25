@@ -3,6 +3,7 @@ package com.jhonatan.sibv2.controllers;
 import com.jhonatan.sibv2.dto.requests.EnderecoRequest;
 import com.jhonatan.sibv2.dto.responses.EnderecoResponse;
 import com.jhonatan.sibv2.dto.responses.CepConsultaResponse;
+import com.jhonatan.sibv2.dto.responses.EstadoResponse;
 import com.jhonatan.sibv2.services.ConsultaCepService;
 import com.jhonatan.sibv2.services.EnderecoService;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,11 @@ public class EnderecoController {
     @GetMapping
     public List<EnderecoResponse> listar(@RequestParam(required = false) String q) {
         return enderecos.listar(q);
+    }
+
+    @GetMapping("/ufs")
+    public List<EstadoResponse> listarUfs() {
+        return enderecos.listarUfs();
     }
 
     @GetMapping("/{id}")

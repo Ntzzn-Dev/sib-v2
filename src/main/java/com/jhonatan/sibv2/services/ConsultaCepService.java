@@ -29,7 +29,7 @@ public class ConsultaCepService {
                     .body(JsonNode.class);
         } catch (RestClientException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Não foi possível consultar o CEP agora. Tente novamente.", exception);
+                    "Não foi possível carregar o endereço pelo CEP. Verifique sua conexão ou preencha os campos manualmente.", exception);
         }
 
         if (endereco == null || endereco.path("erro").asBoolean(false)) {
@@ -37,12 +37,12 @@ public class ConsultaCepService {
         }
 
         CepConsultaResponse response = new CepConsultaResponse();
-        response.setCep(endereco.path("cep").asText(cepFormatado));
-        response.setUf(endereco.path("uf").asText());
-        response.setCidade(endereco.path("localidade").asText());
-        response.setBairro(endereco.path("bairro").asText());
-        response.setLogradouro(endereco.path("logradouro").asText());
-        response.setComplemento(endereco.path("complemento").asText());
+        response.setCep(endereco.path("cep").asString(cepFormatado));
+        response.setUf(endereco.path("uf").asString());
+        response.setCidade(endereco.path("localidade").asString());
+        response.setBairro(endereco.path("bairro").asString());
+        response.setLogradouro(endereco.path("logradouro").asString());
+        response.setComplemento(endereco.path("complemento").asString());
         return response;
     }
 }

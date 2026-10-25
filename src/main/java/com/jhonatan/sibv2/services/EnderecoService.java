@@ -1,6 +1,7 @@
 package com.jhonatan.sibv2.services;
 
 import com.jhonatan.sibv2.dto.requests.EnderecoRequest;
+import com.jhonatan.sibv2.dto.responses.EstadoResponse;
 import com.jhonatan.sibv2.dto.responses.EnderecoResponse;
 import com.jhonatan.sibv2.entities.Endereco;
 import com.jhonatan.sibv2.repositories.EnderecoRepository;
@@ -14,7 +15,34 @@ import java.util.Locale;
 
 @Service
 public class EnderecoService {
-    private static final String UFS = "AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO";
+    private static final List<EstadoResponse> ESTADOS = List.of(
+            new EstadoResponse("AC", "Acre"),
+            new EstadoResponse("AL", "Alagoas"),
+            new EstadoResponse("AP", "Amapá"),
+            new EstadoResponse("AM", "Amazonas"),
+            new EstadoResponse("BA", "Bahia"),
+            new EstadoResponse("CE", "Ceará"),
+            new EstadoResponse("DF", "Distrito Federal"),
+            new EstadoResponse("ES", "Espírito Santo"),
+            new EstadoResponse("GO", "Goiás"),
+            new EstadoResponse("MA", "Maranhão"),
+            new EstadoResponse("MT", "Mato Grosso"),
+            new EstadoResponse("MS", "Mato Grosso do Sul"),
+            new EstadoResponse("MG", "Minas Gerais"),
+            new EstadoResponse("PA", "Pará"),
+            new EstadoResponse("PB", "Paraíba"),
+            new EstadoResponse("PR", "Paraná"),
+            new EstadoResponse("PE", "Pernambuco"),
+            new EstadoResponse("PI", "Piauí"),
+            new EstadoResponse("RJ", "Rio de Janeiro"),
+            new EstadoResponse("RN", "Rio Grande do Norte"),
+            new EstadoResponse("RS", "Rio Grande do Sul"),
+            new EstadoResponse("RO", "Rondônia"),
+            new EstadoResponse("RR", "Roraima"),
+            new EstadoResponse("SC", "Santa Catarina"),
+            new EstadoResponse("SP", "São Paulo"),
+            new EstadoResponse("SE", "Sergipe"),
+            new EstadoResponse("TO", "Tocantins"));
 
     private final EnderecoRepository enderecos;
 
@@ -27,6 +55,10 @@ public class EnderecoService {
                 .filter(endereco -> q == null || q.isBlank() || corresponde(endereco, q))
                 .map(this::resposta)
                 .toList();
+    }
+
+    public List<EstadoResponse> listarUfs() {
+        return ESTADOS;
     }
 
     public EnderecoResponse buscar(int id) {
@@ -63,7 +95,7 @@ public class EnderecoService {
 
     private void aplicarDados(Endereco endereco, EnderecoRequest request) {
         String uf = request.getUf().trim().toUpperCase(Locale.ROOT);
-        if (!uf.matches(UFS)) {
+        if (ESTADOS.stream().noneMatch(estado -> estado.getUf().equals(uf))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UF inválida");
         }
 
