@@ -3,6 +3,8 @@ package com.jhonatan.sibv2.controllers;
 import com.jhonatan.sibv2.dto.requests.FuncionarioRequest;
 import com.jhonatan.sibv2.dto.responses.FuncionarioResponse;
 import com.jhonatan.sibv2.services.FuncionarioService;
+import com.jhonatan.sibv2.config.AuthSessionInterceptor;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/funcionarios")
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class FuncionarioController {
 
     private final FuncionarioService funcionarios;
@@ -31,8 +33,10 @@ public class FuncionarioController {
     }
 
     @PostMapping
-    public FuncionarioResponse criar(@RequestBody FuncionarioRequest request) {
-        return funcionarios.criar(request);
+    public FuncionarioResponse criar(@RequestBody FuncionarioRequest request, HttpSession session) {
+        FuncionarioResponse response = funcionarios.criar(request);
+        session.setAttribute(AuthSessionInterceptor.AUTHENTICATED_EMPLOYEE, response.getCpfPessoa());
+        return response;
     }
 
     @PutMapping("/{cpf}")

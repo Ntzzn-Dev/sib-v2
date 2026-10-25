@@ -1,6 +1,6 @@
 # SIB v2
 
-API REST em Spring Boot que traz os cadastros e os fluxos de venda do projeto CLI `brechoSIB`. Os dados são persistidos por JPA. A configuração atual usa H2 para desenvolvimento; o projeto também inclui o driver PostgreSQL.
+API REST em Spring Boot que traz os cadastros e os fluxos de venda do projeto CLI `brechoSIB`. Os dados são mantidos em H2 em memória durante a execução e apagados quando a API é encerrada. O projeto também inclui o driver PostgreSQL.
 
 ## Executar
 
@@ -53,7 +53,7 @@ POST /api/produtos
 
 ## Autenticação e vendas
 
-`POST /api/auth/login` recebe `{ "cpf": "12345678901", "senha": "senha" }` e retorna CPF e nome do funcionário autenticado. O frontend envia o CPF do funcionário ao criar a venda; a API ainda não emite token de sessão.
+`POST /api/auth/login` recebe `{ "cpf": "12345678901", "senha": "senha" }` e inicia uma sessão HTTP. `POST /api/auth/logout` encerra a sessão. Para criar uma conta, a tela usa `POST /api/funcionarios`; a resposta inicia uma sessão, sem uma segunda chamada de login. O cadastro de funcionários é público; as demais operações que alteram dados exigem sessão autenticada. Consultas permanecem públicas. O frontend envia o CPF do funcionário ao criar a venda.
 
 | Operação | Rota | Corpo |
 |---|---|---|

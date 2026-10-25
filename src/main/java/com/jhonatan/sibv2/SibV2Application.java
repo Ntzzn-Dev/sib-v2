@@ -2,14 +2,13 @@ package com.jhonatan.sibv2;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
 public class SibV2Application {
 
     public static void main(String[] args) {
         SpringApplication.run(SibV2Application.class, args);
-        System.out.println("=======\nSITE NO AR\n=======");
+        System.out.println("=====================\nSITE NO AR\n=====================");
     }
 
 }
