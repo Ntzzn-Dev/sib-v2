@@ -76,11 +76,42 @@ public class VendaService {
 
         for (Integer codigo : request.getCodigos()) {
             Produto produto = produtos.buscarEntidadeObrigatoria(codigo);
+            if (produto.isSelled()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Este produto já foi vendido e não está disponível.");
+            }
+            if (venda.getProdutos().stream().anyMatch(item -> item.getCodProd() == codigo)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Este produto já pertence a esta venda.");
+            }
+            boolean pertenceOutraVendaAberta = vendas.findAll().stream()
+                    .filter(outra -> outra.getCodVenda() != id && outra.getStatus() == 0)
+                    .anyMatch(outra -> outra.getProdutos().stream()
+                            .anyMatch(item -> item.getCodProd() == codigo));
+            if (pertenceOutraVendaAberta) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Este produto já pertence a outra venda em aberto.");
+            }
             venda.addProdutos(produto);
             venda.setValorTotal(venda.getValorTotal() + produto.getPrecoProd());
         }
         vendas.saveAndFlush(venda);
         venda.getProdutos().forEach(entityManager::refresh);
+        return mapearResposta(venda);
+    }
+
+    @Transactional
+    public VendaResponse removerProduto(int id, int produtoId) {
+        Venda venda = buscarVendaObrigatoria(id);
+        validarAberta(venda);
+        Produto produto = venda.getProdutos().stream()
+                .filter(item -> item.getCodProd() == produtoId)
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Este produto não pertence a esta venda."));
+        venda.getProdutos().remove(produto);
+        venda.setValorTotal(Math.max(0, venda.getValorTotal() - produto.getPrecoProd()));
+        vendas.saveAndFlush(venda);
         return mapearResposta(venda);
     }
 
