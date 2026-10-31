@@ -26,12 +26,4 @@ public class VendaPagamento {
     private MetodoPagamento metodoPagamento;
     private double valorPago;
 
-    public void copyFrom(VendaPagamento vdPg){
-        this.setMetodoPagamento(vdPg.getMetodoPagamento());
-        this.setValorPago(vdPg.getValorPago());
-    }
-
-    public boolean searchByTerm(String termo) {
-        return this.getMetodoPagamento().getDescMetodoPag().toUpperCase().contains(termo.toUpperCase());
-    }
 }

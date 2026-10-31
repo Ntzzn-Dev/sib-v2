@@ -23,30 +23,9 @@ public class Endereco {
     private String bairro;
     @Column(nullable = false, length = 50)
     private String logradouro;
-    @Column(nullable = true, length = 5)
+    @Column(length = 5)
     private String numero;
-    @Column(nullable = true, length = 10)
+    @Column(length = 10)
     private String complemento;
-
-    public void copyFrom(Endereco end){
-        this.setCodEnd(end.getCodEnd());
-        this.setUf(end.getUf());
-        this.setCep(end.getCep());
-        this.setCidade(end.getCidade());
-        this.setBairro(end.getBairro());
-        this.setLogradouro(end.getLogradouro());
-        this.setNumero(end.getNumero());
-        this.setComplemento(end.getComplemento());
-    }
-
-    public boolean searchByTerm(String termo) {
-        return this.getBairro().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getCep().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getCidade().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getLogradouro().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getComplemento().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getNumero().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getUf().toUpperCase().contains(termo.toUpperCase());
-    }
 
 }

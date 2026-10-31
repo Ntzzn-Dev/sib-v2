@@ -57,21 +57,4 @@ public class Venda {
         };
     }
 
-    public void copyFrom(Venda venda){
-        this.setCodVenda(venda.getCodVenda());
-        this.setDataVenda(venda.getDataVenda());
-        this.setClienteVenda(venda.getClienteVenda());
-        this.setFuncVenda(venda.getFuncVenda());
-        this.setValorTotal(venda.getValorTotal());
-        this.setProdutos(venda.getProdutos());
-        this.setPagamentos(venda.getPagamentos());
-    }
-
-    public boolean searchByTerm(String termo) {
-        return this.getClienteVenda().getNomePessoa().toUpperCase().contains(termo.toUpperCase()) ||
-        this.getFuncVenda().getNomePessoa().toUpperCase().contains(termo.toUpperCase()) ||
-        this.getDataVenda().toUpperCase().contains(termo.toUpperCase()) ||
-        String.valueOf(this.getValorTotal()).toUpperCase().contains(termo.toUpperCase()) ||
-        this.getStatusString().toUpperCase().contains(termo.toUpperCase());
-    }
 }

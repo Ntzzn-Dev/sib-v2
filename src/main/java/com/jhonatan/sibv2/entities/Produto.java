@@ -27,19 +27,4 @@ public class Produto {
     @Column(name = "preco_produto")
     private double precoProd;
 
-    public void copyFrom(Produto prod){
-        this.setCodProd(prod.getCodProd());
-        this.setDescProd(prod.getDescProd());
-        this.setTamanhoProd(prod.getTamanhoProd());
-        this.setMarcaProd(prod.getMarcaProd());
-        this.setCatProd(prod.getCatProd());
-    }
-
-    public boolean searchByTerm(String termo) {
-        
-        return this.getDescProd().toUpperCase().contains(termo.toUpperCase()) ||
-        this.getTamanhoProd().toUpperCase().contains(termo.toUpperCase()) ||
-        this.getMarcaProd().getNomeMarca().toUpperCase().contains(termo.toUpperCase()) ||
-        this.getCatProd().getNomeCat().toUpperCase().contains(termo.toUpperCase());
-    }
 }

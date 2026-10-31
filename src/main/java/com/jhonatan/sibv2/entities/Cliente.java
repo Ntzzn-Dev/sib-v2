@@ -11,18 +11,4 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Data
-public class Cliente extends Pessoas{
-
-    public void copyFrom(Cliente client){
-        this.setCpfPessoa(client.getCpfPessoa());
-        this.setNomePessoa(client.getNomePessoa());
-        this.setTelPessoa(client.getTelPessoa());
-        this.setEndPessoa(client.getEndPessoa());
-    }
-
-    public boolean searchByTerm(String termo) {
-        return this.getNomePessoa().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getCpfPessoa().toUpperCase().contains(termo.toUpperCase()) ||
-           this.getTelPessoa().toUpperCase().contains(termo.toUpperCase());
-    }
-}
+public class Cliente extends Pessoas {}

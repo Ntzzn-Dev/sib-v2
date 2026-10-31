@@ -18,14 +18,4 @@ public class MetodoPagamento {
     @Column(name = "is_active_metodo_pagamento")
     private boolean isActiveMetodoPag = true;
 
-    public void copyFrom(MetodoPagamento mtd){
-        this.setCodMetodoPag(mtd.getCodMetodoPag());
-        this.setDescMetodoPag(mtd.getDescMetodoPag());
-        this.setActiveMetodoPag(mtd.isActiveMetodoPag());
-    }
-
-    public boolean searchByTerm(String termo) {
-        return this.getDescMetodoPag().toUpperCase().contains(termo.toUpperCase()) ||
-        (this.isActiveMetodoPag() ? "ativo" : "desativado").toUpperCase().contains(termo.toUpperCase());
-    }
 }

@@ -18,12 +18,4 @@ public class Categoria {
     @Column (name="nome_categoria", length=30, nullable=false)
     private String nomeCat;
 
-    public boolean searchByTerm(String termo) {
-        return this.getNomeCat().toUpperCase().contains(termo.toUpperCase());
-    }
-
-    public void copyFrom(Categoria cat){
-        this.setCodCat(cat.getCodCat());
-        this.setNomeCat(cat.getNomeCat());
-    }
 }

@@ -13,13 +13,4 @@ public class Marca {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int codMarca;
     private String nomeMarca;
-    
-    public void copyFrom(Marca marca){
-        this.setCodMarca(marca.getCodMarca());
-        this.setNomeMarca(marca.getNomeMarca());
-    }
-
-    public boolean searchByTerm(String termo) {
-        return this.getNomeMarca().toUpperCase().contains(termo.toUpperCase());
-    }
 }
