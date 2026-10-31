@@ -40,7 +40,6 @@ public class Venda {
     // 2 - CANCELADA
 
     public void addProdutos(Produto produto) {
-        produto.setSelled(true);
         this.produtos.add(produto);
     }
 

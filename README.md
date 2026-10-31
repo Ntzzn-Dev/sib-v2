@@ -1,12 +1,14 @@
 # SIB v2
 
-API REST em Spring Boot que traz os cadastros e os fluxos de venda do projeto CLI `brechoSIB`. Os dados são mantidos em H2 em memória durante a execução e apagados quando a API é encerrada. O projeto também inclui o driver PostgreSQL.
+API REST em Spring Boot que traz os cadastros e os fluxos de venda do projeto CLI `brechoSIB`. A API usa Microsoft SQL Server no servidor `DESKTOP-KLGKUVQ` por padrão. O banco padrão é `sibdb`.
 
 ## Executar
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
+
+O SQL Server deve estar com TCP/IP habilitado e o banco `sibdb` criado. A aplicação usa a autenticação integrada do Windows. O padrão é o host `DESKTOP-KLGKUVQ` na porta 1433; altere `DB_HOST`, `DB_PORT` e `DB_NAME` se necessário. O driver JDBC exige a biblioteca nativa de autenticação Windows, copiada pelo Maven para `target/native`. A inicialização executa `src/main/resources/db/01_schema_sqlserver.sql` e `02_business_rules_sqlserver.sql`; o Hibernate valida o mapeamento existente sem recriar ou apagar dados. O perfil de testes usa H2 isolado, para o build não depender do SQL Server.
 
 A API fica disponível em `http://localhost:8080/api`. Requisições e respostas usam JSON. Códigos inexistentes retornam 404, dados inválidos retornam 400 e credenciais inválidas retornam 401. CORS está habilitado para permitir integração com o frontend durante o desenvolvimento.
 

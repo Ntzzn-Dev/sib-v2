@@ -9,6 +9,7 @@ import com.jhonatan.sibv2.entities.*;
 import com.jhonatan.sibv2.repositories.VendaRepository;
 import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,14 +26,16 @@ public class VendaService {
     private final FuncionarioService funcionarios;
     private final ProdutoService produtos;
     private final MetodoPagamentoService metodos;
+    private final EntityManager entityManager;
 
     public VendaService(VendaRepository vendas, ClienteService clientes, FuncionarioService funcionarios,
-                        ProdutoService produtos, MetodoPagamentoService metodos) {
+                        ProdutoService produtos, MetodoPagamentoService metodos, EntityManager entityManager) {
         this.vendas = vendas;
         this.clientes = clientes;
         this.funcionarios = funcionarios;
         this.produtos = produtos;
         this.metodos = metodos;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -73,22 +76,18 @@ public class VendaService {
 
         for (Integer codigo : request.getCodigos()) {
             Produto produto = produtos.buscarEntidadeObrigatoria(codigo);
-            if (produto.isSelled()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto " + codigo + " já foi vendido");
-            }
             venda.addProdutos(produto);
             venda.setValorTotal(venda.getValorTotal() + produto.getPrecoProd());
         }
-        return mapearResposta(vendas.save(venda));
+        vendas.saveAndFlush(venda);
+        venda.getProdutos().forEach(entityManager::refresh);
+        return mapearResposta(venda);
     }
 
     @Transactional
     public VendaResponse pagar(int id, List<PagamentoRequest> request) {
         Venda venda = buscarVendaObrigatoria(id);
         validarAberta(venda);
-        if (venda.getValorTotal() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Adicione produtos antes de pagar");
-        }
         if (request == null || request.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe as formas de pagamento");
         }
@@ -97,14 +96,6 @@ public class VendaService {
         List<VendaPagamento> pagamentos = new java.util.ArrayList<>();
         for (PagamentoRequest item : request) {
             MetodoPagamento metodo = metodos.buscarEntidadeObrigatoria(item.getMetodoPagamentoId());
-            if (!metodo.isActiveMetodoPag()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Método desabilitado: " + metodo.getDescMetodoPag());
-            }
-            if (item.getValorPago() <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O valor pago deve ser maior que zero");
-            }
-
             double valor = Math.min(item.getValorPago(), restante);
             VendaPagamento pagamento = new VendaPagamento();
             pagamento.setVenda(venda);
@@ -117,17 +108,17 @@ public class VendaService {
             }
         }
 
-        if (restante > 0.0000001) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Pagamento incompleto: faltam R$ " + String.format(Locale.ROOT, "%.2f", restante));
-        }
-
         venda.getPagamentos().clear();
         for (VendaPagamento pagamento : pagamentos) {
             venda.addPagamentos(pagamento);
         }
-        venda.setStatus(1);
-        return mapearResposta(vendas.save(venda));
+        vendas.saveAndFlush(venda);
+        entityManager.createNativeQuery("EXEC dbo.finalizar_venda :vendaId")
+                .setParameter("vendaId", id)
+                .executeUpdate();
+        entityManager.refresh(venda);
+        venda.getProdutos().forEach(entityManager::refresh);
+        return mapearResposta(venda);
     }
 
     @Transactional

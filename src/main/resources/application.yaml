@@ -1,11 +1,11 @@
 spring:
   application:
     name: sib-v2
+
   datasource:
-    url: jdbc:h2:mem:sibdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:sqlserver://DESKTOP-KLGKUVQ:1433;databaseName=sibdb;encrypt=true;trustServerCertificate=true;integratedSecurity=true;authenticationScheme=NativeAuthentication
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
