@@ -6,16 +6,17 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Entity
-@Table(name = "categoria")
+@Table(name = "categorias")
 @NoArgsConstructor
 @Data
 public class Categoria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cod_categorias")
     private int codCat;
 
     @NonNull
-    @Column (name="nome_categoria", length=30, nullable=false)
+    @Column (name="nome", length=50, nullable=false)
     private String nomeCat;
 
 }

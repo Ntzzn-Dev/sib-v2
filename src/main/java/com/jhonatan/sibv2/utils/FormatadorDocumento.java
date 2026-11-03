@@ -8,12 +8,17 @@ public final class FormatadorDocumento {
     }
 
     public static String formatarCpf(String value) {
+        String digits = normalizarCpf(value);
+        return digits.substring(0, 3) + "." + digits.substring(3, 6) + "."
+                + digits.substring(6, 9) + "-" + digits.substring(9);
+    }
+
+    public static String normalizarCpf(String value) {
         String digits = value == null ? "" : value.replaceAll("\\D", "");
         if (digits.length() != 11) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF inválido: informe 11 dígitos");
         }
-        return digits.substring(0, 3) + "." + digits.substring(3, 6) + "."
-                + digits.substring(6, 9) + "-" + digits.substring(9);
+        return digits;
     }
 
     public static String formatarCep(String value) {

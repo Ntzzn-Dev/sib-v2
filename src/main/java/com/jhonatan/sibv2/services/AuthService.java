@@ -18,13 +18,13 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        String cpf = FormatadorDocumento.formatarCpf(request.getCpf());
+        String cpf = FormatadorDocumento.normalizarCpf(request.getCpf());
         Funcionario funcionario = funcionarios.findByCpfPessoaAndSenha(cpf, request.getSenha())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Usuário ou senha não encontrados"));
 
         LoginResponse response = new LoginResponse();
-        response.setCpfPessoa(funcionario.getCpfPessoa());
+        response.setCpfPessoa(FormatadorDocumento.formatarCpf(funcionario.getCpfPessoa()));
         response.setNomePessoa(funcionario.getNomePessoa());
         response.setMessage("Login realizado");
         return response;

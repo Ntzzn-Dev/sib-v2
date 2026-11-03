@@ -2,6 +2,7 @@ package com.jhonatan.sibv2.dto.requests;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -11,5 +12,5 @@ public class ProdutoRequest {
     private String tamanhoProd;
     private MarcaRequest marcaProd;
     private CategoriaRequest catProd;
-    private double precoProd;
+    private BigDecimal precoProd = BigDecimal.ZERO;
 }

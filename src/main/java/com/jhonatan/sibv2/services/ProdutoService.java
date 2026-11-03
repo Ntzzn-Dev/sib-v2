@@ -8,36 +8,45 @@ import com.jhonatan.sibv2.entities.Categoria;
 import com.jhonatan.sibv2.entities.Marca;
 import com.jhonatan.sibv2.entities.Produto;
 import com.jhonatan.sibv2.repositories.ProdutoRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ProdutoService {
-    private static final Set<String> TAMANHOS = Set.of("XS", "PP", "P", "M", "G", "GG", "XG", "XGG", "XXG", "XXXG",
-            "XL", "XXL", "XXXL", "36", "38", "40", "42", "44", "46", "48", "50", "52", "54", "56",
-            "33", "34", "35", "37", "39", "41", "43", "45", "47");
-
     private final ProdutoRepository produtos;
-    private final MarcaService marcas;
-    private final CategoriaService categorias;
+    private final EntityManager entityManager;
 
-    public ProdutoService(ProdutoRepository produtos, MarcaService marcas, CategoriaService categorias) {
+    public ProdutoService(ProdutoRepository produtos, EntityManager entityManager) {
         this.produtos = produtos;
-        this.marcas = marcas;
-        this.categorias = categorias;
+        this.entityManager = entityManager;
     }
 
     public List<ProdutoResponse> listar(String q, Boolean vendido) {
-        return produtos.findAll().stream()
-                .filter(produto -> vendido == null || produto.isSelled() == vendido)
-                .filter(produto -> q == null || q.isBlank() || corresponde(produto, q))
-                .map(this::resposta)
-                .toList();
+        String termo = q == null || q.isBlank() ? null : q.trim();
+        String sql = Boolean.FALSE.equals(vendido)
+                ? "SELECT cod_prod FROM dbo.fn_produtos_disponiveis() " +
+                    "WHERE (:q IS NULL OR descricao LIKE '%' + :q + '%' OR marca_nome LIKE '%' + :q + '%' " +
+                    "OR categoria_nome LIKE '%' + :q + '%') ORDER BY descricao"
+                : "SELECT cod_prod FROM dbo.vw_produtos_estoque " +
+                    "WHERE (:vendido IS NULL OR is_selled=:vendido) " +
+                    "AND (:q IS NULL OR descricao LIKE '%' + :q + '%' OR marca_nome LIKE '%' + :q + '%' " +
+                    "OR categoria_nome LIKE '%' + :q + '%') ORDER BY descricao";
+        var query = entityManager.createNativeQuery(sql).setParameter("q", termo);
+        if (!Boolean.FALSE.equals(vendido)) query.setParameter("vendido", vendido);
+        @SuppressWarnings("unchecked")
+        List<Integer> ids = query.getResultList();
+        Map<Integer, Produto> porCodigo = produtos.findAllById(ids).stream()
+                .collect(Collectors.toMap(Produto::getCodProd, Function.identity()));
+        return ids.stream().map(porCodigo::get).filter(java.util.Objects::nonNull)
+                .map(this::resposta).toList();
     }
 
     public ProdutoResponse buscar(int id) {
@@ -55,9 +64,6 @@ public class ProdutoService {
 
     public ProdutoResponse editar(int id, ProdutoRequest request) {
         Produto produto = buscarEntidadeObrigatoria(id);
-        if (produto.isSelled()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto vendido não pode ser editado");
-        }
         produto.setMarcaProd(buscarMarca(request));
         produto.setCatProd(buscarCategoria(request));
         aplicarDados(produto, request);
@@ -66,9 +72,6 @@ public class ProdutoService {
 
     public void apagar(int id) {
         Produto produto = buscarEntidadeObrigatoria(id);
-        if (produto.isSelled()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Produto vendido não pode ser removido");
-        }
         produtos.delete(produto);
     }
 
@@ -78,45 +81,20 @@ public class ProdutoService {
     }
 
     private Marca buscarMarca(ProdutoRequest request) {
-        if (request.getMarcaProd() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecione uma marca");
-        }
-        return marcas.buscarEntidadeObrigatoria(request.getMarcaProd().getCodMarca());
+        if (request.getMarcaProd() == null || request.getMarcaProd().getCodMarca() <= 0) return null;
+        return entityManager.getReference(Marca.class, request.getMarcaProd().getCodMarca());
     }
 
     private Categoria buscarCategoria(ProdutoRequest request) {
-        if (request.getCatProd() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecione uma categoria");
-        }
-        return categorias.buscarEntidadeObrigatoria(request.getCatProd().getCodCat());
+        if (request.getCatProd() == null || request.getCatProd().getCodCat() <= 0) return null;
+        return entityManager.getReference(Categoria.class, request.getCatProd().getCodCat());
     }
 
     private void aplicarDados(Produto produto, ProdutoRequest request) {
         produto.setDescProd(request.getDescProd());
-        produto.setTamanhoProd(validarTamanho(request.getTamanhoProd()));
-        if (request.getPrecoProd() < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Preço não pode ser negativo");
-        }
         produto.setPrecoProd(request.getPrecoProd());
-    }
-
-    private String validarTamanho(String value) {
-        String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
-        if (!TAMANHOS.contains(normalized)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tamanho inválido");
-        }
-        return normalized;
-    }
-
-    private boolean corresponde(Produto produto, String q) {
-        String termo = q.toLowerCase(Locale.ROOT);
-        return contem(produto.getDescProd(), termo) || contem(produto.getTamanhoProd(), termo)
-                || contem(produto.getMarcaProd().getNomeMarca(), termo)
-                || contem(produto.getCatProd().getNomeCat(), termo);
-    }
-
-    private boolean contem(String valor, String termo) {
-        return valor != null && valor.toLowerCase(Locale.ROOT).contains(termo);
+        produto.setTamanhoProd(request.getTamanhoProd() == null ? null
+                : request.getTamanhoProd().trim().toUpperCase(Locale.ROOT));
     }
 
     public ProdutoResponse mapearResposta(Produto produto) {
@@ -127,6 +105,10 @@ public class ProdutoService {
         response.setMarcaProd(respostaMarca(produto.getMarcaProd()));
         response.setCatProd(respostaCategoria(produto.getCatProd()));
         response.setSelled(produto.isSelled());
+        response.setDisponivel((Boolean) entityManager.createNativeQuery(
+                        "SELECT dbo.fn_produto_disponivel(:codProd)")
+                .setParameter("codProd", produto.getCodProd())
+                .getSingleResult());
         response.setPrecoProd(produto.getPrecoProd());
         return response;
     }

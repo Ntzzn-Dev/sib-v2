@@ -3,7 +3,7 @@ spring:
     name: sib-v2
 
   datasource:
-    url: jdbc:sqlserver://DESKTOP-KLGKUVQ:1433;databaseName=sibdb;encrypt=true;trustServerCertificate=true;integratedSecurity=true;authenticationScheme=NativeAuthentication
+    url: jdbc:sqlserver://DESKTOP-KLGKUVQ:1433;databaseName=brecho;encrypt=true;trustServerCertificate=true;integratedSecurity=true;authenticationScheme=NativeAuthentication
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
   jpa:

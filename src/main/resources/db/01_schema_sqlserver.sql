@@ -1,68 +1,114 @@
+IF DB_ID(N'brecho') IS NULL CREATE DATABASE brecho;
+GO
+USE brecho;
+GO
 
-CREATE TABLE endereco (
-    codigo_endereco INT IDENTITY(1,1) PRIMARY KEY,
-    uf VARCHAR(2) NOT NULL, cep VARCHAR(9) NOT NULL,
-    cidade VARCHAR(50) NOT NULL, bairro VARCHAR(50) NOT NULL,
-    logradouro VARCHAR(50) NOT NULL, numero VARCHAR(5), complemento VARCHAR(10)
+CREATE TABLE pessoas (
+    cpf VARCHAR(11) NOT NULL,
+    nome VARCHAR(50) NOT NULL,
+    telefone VARCHAR(11) NULL,
+    CONSTRAINT pk_pessoas PRIMARY KEY (cpf)
 );
+GO
 
-CREATE TABLE cliente (
-    cpf_pessoa VARCHAR(14) NOT NULL PRIMARY KEY,
-    nome_pessoa VARCHAR(50) NOT NULL, tel_pessoa VARCHAR(11),
-    end_pessoa_codigo_endereco INT NULL UNIQUE REFERENCES endereco(codigo_endereco)
+CREATE TABLE clientes (
+    pessoa_cpf VARCHAR(11) NOT NULL,
+    CONSTRAINT pk_clientes PRIMARY KEY (pessoa_cpf),
+    CONSTRAINT fk_pessoas_clientes FOREIGN KEY (pessoa_cpf) REFERENCES pessoas(cpf)
 );
+GO
 
-CREATE TABLE funcionario (
-    cpf_pessoa VARCHAR(14) NOT NULL PRIMARY KEY,
-    nome_pessoa VARCHAR(50) NOT NULL, tel_pessoa VARCHAR(11),
-    end_pessoa_codigo_endereco INT NULL UNIQUE REFERENCES endereco(codigo_endereco),
-    salario_funcionario FLOAT NOT NULL CONSTRAINT df_func_salario DEFAULT 0 CONSTRAINT ck_func_salario CHECK (salario_funcionario >= 0),
-    senha VARCHAR(255)
+CREATE TABLE funcionarios (
+    pessoa_cpf VARCHAR(11) NOT NULL,
+    salario DECIMAL(8,2) NOT NULL CONSTRAINT df_funcionarios_salario DEFAULT 0,
+    senha VARCHAR(255) NULL,
+    CONSTRAINT pk_funcionarios PRIMARY KEY (pessoa_cpf),
+    CONSTRAINT fk_pessoas_funcionarios FOREIGN KEY (pessoa_cpf) REFERENCES pessoas(cpf),
+    CONSTRAINT ck_funcionarios_salario CHECK (salario >= 0)
 );
+GO
 
-CREATE TABLE marca (
-    cod_marca INT IDENTITY(1,1) PRIMARY KEY,
-    nome_marca VARCHAR(255) NOT NULL UNIQUE
+CREATE TABLE marcas (
+    cod_marca INT IDENTITY(1,1) NOT NULL,
+    nome VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_marcas PRIMARY KEY (cod_marca),
+    CONSTRAINT uq_marcas_nome UNIQUE (nome)
 );
+GO
 
-CREATE TABLE categoria (
-    cod_cat INT IDENTITY(1,1) PRIMARY KEY,
-    nome_categoria VARCHAR(30) NOT NULL UNIQUE
+CREATE TABLE categorias (
+    cod_categorias INT IDENTITY(1,1) NOT NULL,
+    nome VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_categorias PRIMARY KEY (cod_categorias),
+    CONSTRAINT uq_categorias_nome UNIQUE (nome)
 );
+GO
 
 CREATE TABLE metodo_pagamento (
-    codigo_metodo_pagamento INT IDENTITY(1,1) PRIMARY KEY,
-    descricao_metodo_pagamento VARCHAR(255) NOT NULL UNIQUE,
-    is_active_metodo_pagamento BIT NOT NULL CONSTRAINT df_metodo_ativo DEFAULT 1
+    cod_pagamento INT IDENTITY(1,1) NOT NULL,
+    desc_pagamento VARCHAR(50) NOT NULL,
+    is_active BIT NOT NULL CONSTRAINT df_metodo_pagamento_active DEFAULT 1,
+    CONSTRAINT pk_pagamento PRIMARY KEY (cod_pagamento),
+    CONSTRAINT uq_metodo_pagamento_desc UNIQUE (desc_pagamento)
 );
+GO
 
-CREATE TABLE produto (
-    codigo_produto INT IDENTITY(1,1) PRIMARY KEY,
-    descricao_produto VARCHAR(255) NOT NULL, tamanho_produto VARCHAR(10) NOT NULL,
-    marca_id INT NOT NULL REFERENCES marca(cod_marca),
-    categoria_id INT NOT NULL REFERENCES categoria(cod_cat),
-    is_selled BIT NOT NULL CONSTRAINT df_produto_vendido DEFAULT 0,
-    preco_produto FLOAT NOT NULL CONSTRAINT ck_produto_preco CHECK (preco_produto >= 0)
+CREATE TABLE endereco (
+    cod_end INT IDENTITY(1,1) NOT NULL,
+    cpf_pessoa VARCHAR(11) NULL,
+    logradouro VARCHAR(50) NULL,
+    complemento VARCHAR(50) NULL,
+    numero VARCHAR(50) NULL,
+    bairro VARCHAR(50) NULL,
+    cidade VARCHAR(50) NULL,
+    cep VARCHAR(9) NULL,
+    uf VARCHAR(2) NULL,
+    CONSTRAINT pk_endereco PRIMARY KEY (cod_end),
+    CONSTRAINT fk_endereco_pessoa FOREIGN KEY (cpf_pessoa) REFERENCES pessoas(cpf)
 );
+GO
 
-CREATE TABLE venda (
-    codigo_venda INT IDENTITY(1,1) PRIMARY KEY,
-    data_venda VARCHAR(20) NOT NULL,
-    cliente_id VARCHAR(14) NOT NULL REFERENCES cliente(cpf_pessoa),
-    funcionario_id VARCHAR(14) NOT NULL REFERENCES funcionario(cpf_pessoa),
-    valor_total FLOAT NOT NULL CONSTRAINT df_venda_total DEFAULT 0 CONSTRAINT ck_venda_total CHECK (valor_total >= 0),
-    status INT NOT NULL CONSTRAINT df_venda_status DEFAULT 0 CONSTRAINT ck_venda_status CHECK (status IN (0,1,2))
+CREATE TABLE vendas (
+    cod_venda INT IDENTITY(1,1) NOT NULL,
+    [data] DATETIME NOT NULL CONSTRAINT df_vendas_data DEFAULT GETDATE(),
+    cpf_cliente VARCHAR(11) NOT NULL,
+    cpf_funcionario VARCHAR(11) NOT NULL,
+    endereco_entrega INT NULL,
+    valor_total DECIMAL(10,2) NULL CONSTRAINT df_vendas_total DEFAULT 0,
+    status INT NOT NULL CONSTRAINT df_vendas_status DEFAULT 0,
+    CONSTRAINT pk_venda PRIMARY KEY (cod_venda),
+    CONSTRAINT fk_venda_cliente FOREIGN KEY (cpf_cliente) REFERENCES clientes(pessoa_cpf),
+    CONSTRAINT fk_venda_funcionario FOREIGN KEY (cpf_funcionario) REFERENCES funcionarios(pessoa_cpf),
+    CONSTRAINT fk_venda_endereco FOREIGN KEY (endereco_entrega) REFERENCES endereco(cod_end),
+    CONSTRAINT ck_vendas_status CHECK (status IN (0,1,2)),
+    CONSTRAINT ck_vendas_total CHECK (valor_total IS NULL OR valor_total >= 0)
 );
+GO
 
-CREATE TABLE venda_produtos (
-    venda_codigo_venda INT NOT NULL REFERENCES venda(codigo_venda) ON DELETE CASCADE,
-    produtos_codigo_produto INT NOT NULL UNIQUE REFERENCES produto(codigo_produto),
-    CONSTRAINT pk_venda_produtos PRIMARY KEY (venda_codigo_venda, produtos_codigo_produto)
+CREATE TABLE produtos (
+    cod_prod INT IDENTITY(1,1) NOT NULL,
+    descricao VARCHAR(50) NOT NULL,
+    tamanho VARCHAR(3) NOT NULL,
+    cod_marca INT NULL,
+    cod_categoria INT NOT NULL,
+    cod_venda INT NULL,
+    preco DECIMAL(10,2) NOT NULL CONSTRAINT df_produtos_preco DEFAULT 0,
+    is_selled BIT NOT NULL CONSTRAINT df_produtos_vendido DEFAULT 0,
+    CONSTRAINT pk_produtos PRIMARY KEY (cod_prod),
+    CONSTRAINT fk_prod_marca FOREIGN KEY (cod_marca) REFERENCES marcas(cod_marca),
+    CONSTRAINT fk_prod_categoria FOREIGN KEY (cod_categoria) REFERENCES categorias(cod_categorias),
+    CONSTRAINT fk_prod_venda FOREIGN KEY (cod_venda) REFERENCES vendas(cod_venda),
+    CONSTRAINT ck_produtos_preco CHECK (preco >= 0)
 );
+GO
 
 CREATE TABLE venda_pagamento (
-    cod_venda_pagamento INT IDENTITY(1,1) PRIMARY KEY,
-    venda_id INT NOT NULL REFERENCES venda(codigo_venda) ON DELETE CASCADE,
-    metodo_pagamento_id INT NOT NULL REFERENCES metodo_pagamento(codigo_metodo_pagamento),
-    valor_pago FLOAT NOT NULL CONSTRAINT ck_pagamento_valor CHECK (valor_pago > 0)
+    cod_pagamento INT NOT NULL,
+    cod_venda INT NOT NULL,
+    valor_pago DECIMAL(10,2) NOT NULL CONSTRAINT df_venda_pagamento_valor DEFAULT 0,
+    CONSTRAINT pk_venda_pagamento PRIMARY KEY (cod_pagamento, cod_venda),
+    CONSTRAINT fk_venda_pagamento_pagamento FOREIGN KEY (cod_pagamento) REFERENCES metodo_pagamento(cod_pagamento),
+    CONSTRAINT fk_venda_pagamento_venda FOREIGN KEY (cod_venda) REFERENCES vendas(cod_venda),
+    CONSTRAINT ck_venda_pagamento_valor CHECK (valor_pago >= 0)
 );
+GO

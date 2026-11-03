@@ -5,27 +5,29 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table
+@Table(name = "endereco")
 @Data
 @NoArgsConstructor
 public class Endereco {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "codigo_endereco")
+    @Column(name = "cod_end")
     private int codEnd;
-    @Column(nullable = false, length = 2)
+    @Column(name = "cpf_pessoa", length = 11)
+    private String cpfPessoa;
+    @Column(length = 2)
     private String uf;
-    @Column(nullable = false, length = 9)
+    @Column(length = 9)
     private String cep;
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String cidade;
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String bairro;
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String logradouro;
-    @Column(length = 5)
+    @Column(length = 50)
     private String numero;
-    @Column(length = 10)
+    @Column(length = 50)
     private String complemento;
 
 }

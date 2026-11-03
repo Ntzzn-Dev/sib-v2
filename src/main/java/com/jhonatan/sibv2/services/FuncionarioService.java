@@ -30,24 +30,26 @@ public class FuncionarioService {
     }
 
     public FuncionarioResponse buscar(String cpf) {
-        return resposta(buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf)));
+        return resposta(buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf)));
     }
 
     public FuncionarioResponse criar(FuncionarioRequest request) {
         Funcionario funcionario = new Funcionario();
-        funcionario.setCpfPessoa(FormatadorDocumento.formatarCpf(request.getCpfPessoa()));
+        funcionario.setCpfPessoa(FormatadorDocumento.normalizarCpf(request.getCpfPessoa()));
         aplicarDados(funcionario, request);
-        return resposta(funcionarios.save(funcionario));
+        Funcionario criado = funcionarios.save(funcionario);
+        enderecos.associarPessoa(criado.getEndPessoa(), criado.getCpfPessoa());
+        return resposta(criado);
     }
 
     public FuncionarioResponse editar(String cpf, FuncionarioRequest request) {
-        Funcionario funcionario = buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf));
+        Funcionario funcionario = buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf));
         aplicarDados(funcionario, request);
         return resposta(funcionarios.save(funcionario));
     }
 
     public void apagar(String cpf) {
-        funcionarios.delete(buscarEntidadeObrigatoria(FormatadorDocumento.formatarCpf(cpf)));
+        funcionarios.delete(buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf)));
     }
 
     public Funcionario buscarEntidadeObrigatoria(String cpf) {
@@ -67,9 +69,9 @@ public class FuncionarioService {
 
     private boolean corresponde(Funcionario funcionario, String q) {
         String termo = q.toLowerCase(Locale.ROOT);
-        return contem(funcionario.getNomePessoa(), termo) || contem(funcionario.getCpfPessoa(), termo)
+        return contem(funcionario.getNomePessoa(), termo) || contem(FormatadorDocumento.formatarCpf(funcionario.getCpfPessoa()), termo)
                 || contem(funcionario.getTelPessoa(), termo)
-                || String.valueOf(funcionario.getSalarioFunc()).contains(termo);
+                || funcionario.getSalarioFunc().toPlainString().contains(termo);
     }
 
     private boolean contem(String valor, String termo) {
@@ -78,12 +80,14 @@ public class FuncionarioService {
 
     public FuncionarioResponse mapearResposta(Funcionario funcionario) {
         FuncionarioResponse response = new FuncionarioResponse();
-        response.setCpfPessoa(funcionario.getCpfPessoa());
+        response.setCpfPessoa(FormatadorDocumento.formatarCpf(funcionario.getCpfPessoa()));
         response.setNomePessoa(funcionario.getNomePessoa());
         response.setTelPessoa(funcionario.getTelPessoa());
         response.setSalarioFunc(funcionario.getSalarioFunc());
-        if (funcionario.getEndPessoa() != null) {
-            response.setEndPessoa(enderecos.mapearResposta(funcionario.getEndPessoa()));
+        var endereco = funcionario.getEndPessoa() != null ? funcionario.getEndPessoa()
+                : enderecos.buscarPorPessoa(funcionario.getCpfPessoa());
+        if (endereco != null) {
+            response.setEndPessoa(enderecos.mapearResposta(endereco));
         }
         return response;
     }

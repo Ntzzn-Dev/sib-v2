@@ -2,6 +2,7 @@ package com.jhonatan.sibv2.dto.responses;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -12,5 +13,6 @@ public class ProdutoResponse {
     private MarcaResponse marcaProd;
     private CategoriaResponse catProd;
     private boolean selled;
-    private double precoProd;
+    private boolean disponivel;
+    private BigDecimal precoProd;
 }

@@ -5,17 +5,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table
+@Table(name = "metodo_pagamento")
 @NoArgsConstructor
 @Data
 public class MetodoPagamento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "codigo_metodo_pagamento")
+    @Column(name = "cod_pagamento")
     private int codMetodoPag;
-    @Column(name = "descricao_metodo_pagamento")
+    @Column(name = "desc_pagamento", length = 50, nullable = false)
     private String descMetodoPag;
-    @Column(name = "is_active_metodo_pagamento")
+    @Column(name = "is_active")
     private boolean isActiveMetodoPag = true;
 
 }

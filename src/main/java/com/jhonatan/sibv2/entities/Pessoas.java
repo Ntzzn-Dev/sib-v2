@@ -8,20 +8,20 @@ import lombok.NonNull;
 
 @Entity
 @Table(name = "pessoas")
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+@Inheritance(strategy = InheritanceType.JOINED)
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public abstract class Pessoas {
     @Id
     @NonNull
-    @Column(length = 14, nullable = false)
+    @Column(name = "cpf", length = 11, nullable = false)
     private String cpfPessoa;
-    @Column(length = 50, nullable = false)
+    @Column(name = "nome", length = 50, nullable = false)
     private String nomePessoa;
-    @Column(length = 11, nullable = true)
+    @Column(name = "telefone", length = 11)
     private String telPessoa;
-    @OneToOne
+    @Transient
     private Endereco endPessoa;
 
 }

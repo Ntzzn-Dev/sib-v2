@@ -1,29 +1,30 @@
 package com.jhonatan.sibv2.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.math.BigDecimal;
 
 @Entity
-@Table
+@Table(name = "venda_pagamento")
+@IdClass(VendaPagamentoId.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class VendaPagamento {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long codVendaPagamento;
-
     @ManyToOne
-    @JoinColumn(name = "venda_id")
+    @JoinColumn(name = "cod_venda")
     @JsonIgnore
     private Venda venda;
 
+    @Id
     @ManyToOne
-    @JoinColumn(name = "metodo_pagamento_id")
+    @JoinColumn(name = "cod_pagamento")
     private MetodoPagamento metodoPagamento;
-    private double valorPago;
 
+    @Column(name = "valor_pago")
+    private BigDecimal valorPago = BigDecimal.ZERO;
 }

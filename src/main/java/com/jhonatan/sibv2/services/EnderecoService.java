@@ -88,6 +88,16 @@ public class EnderecoService {
         return buscarObrigatorio(request.getCodEnd());
     }
 
+    public Endereco buscarPorPessoa(String cpfPessoa) {
+        return enderecos.findFirstByCpfPessoa(cpfPessoa).orElse(null);
+    }
+
+    public void associarPessoa(Endereco endereco, String cpfPessoa) {
+        if (endereco == null) return;
+        endereco.setCpfPessoa(cpfPessoa);
+        enderecos.save(endereco);
+    }
+
     private Endereco buscarObrigatorio(int id) {
         return enderecos.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Endereço não encontrado"));

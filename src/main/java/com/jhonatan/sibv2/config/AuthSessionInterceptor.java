@@ -16,6 +16,7 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
     private static final String LOGIN_PATH = "/api/auth/login";
     private static final String LOGOUT_PATH = "/api/auth/logout";
     private static final String EMPLOYEE_PATH = "/api/funcionarios";
+    private static final String ADDRESS_PATH = "/api/enderecos";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -36,7 +37,8 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
                 || HttpMethod.GET.matches(method)
                 || HttpMethod.HEAD.matches(method)
                 || LOGIN_PATH.equals(path)
-                || LOGOUT_PATH.equals(path);
+                || LOGOUT_PATH.equals(path)
+                || (HttpMethod.POST.matches(method) && ADDRESS_PATH.equals(path));
     }
 
     private boolean isLoggedIn(HttpServletRequest request) {
