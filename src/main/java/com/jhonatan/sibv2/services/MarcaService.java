@@ -13,46 +13,42 @@ import java.util.Locale;
 
 @Service
 public class MarcaService {
-    private final MarcaRepository marcas;
+    private final MarcaRepository marcaRepository;
 
-    public MarcaService(MarcaRepository marcas) {
-        this.marcas = marcas;
+    public MarcaService(MarcaRepository marcaRepository) {
+        this.marcaRepository = marcaRepository;
     }
 
-    public List<MarcaResponse> listar(String q) {
-        return marcas.findAll().stream()
-                .filter(marca -> q == null || q.isBlank()
-                        || contem(marca.getNomeMarca(), q))
-                .map(this::resposta)
+    public List<MarcaResponse> listar(String pesquisa) {
+        return marcaRepository.findAll().stream()
+                .filter(marca -> pesquisa == null || pesquisa.isBlank()
+                        || contem(marca.getNomeMarca(), pesquisa))
+                .map(this::mapearResposta)
                 .toList();
     }
 
     public MarcaResponse buscar(int id) {
-        return resposta(buscarObrigatoria(id));
-    }
-
-    public Marca buscarEntidadeObrigatoria(int id) {
-        return buscarObrigatoria(id);
+        return mapearResposta(buscarEntidadeObrigatoria(id));
     }
 
     public MarcaResponse criar(MarcaRequest request) {
         Marca marca = new Marca();
         marca.setNomeMarca(request.getNomeMarca());
-        return resposta(marcas.save(marca));
+        return mapearResposta(marcaRepository.save(marca));
     }
 
     public MarcaResponse editar(int id, MarcaRequest request) {
-        Marca marca = buscarObrigatoria(id);
+        Marca marca = buscarEntidadeObrigatoria(id);
         marca.setNomeMarca(request.getNomeMarca());
-        return resposta(marcas.save(marca));
+        return mapearResposta(marcaRepository.save(marca));
     }
 
     public void apagar(int id) {
-        marcas.delete(buscarObrigatoria(id));
+        marcaRepository.delete(buscarEntidadeObrigatoria(id));
     }
 
-    private Marca buscarObrigatoria(int id) {
-        return marcas.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada"));
+    public Marca buscarEntidadeObrigatoria(int id) {
+        return marcaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada"));
     }
 
     private boolean contem(String valor, String q) {
@@ -66,7 +62,4 @@ public class MarcaService {
         return response;
     }
 
-    private MarcaResponse resposta(Marca marca) {
-        return mapearResposta(marca);
-    }
 }

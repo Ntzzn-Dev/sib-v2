@@ -13,46 +13,42 @@ import java.util.Locale;
 
 @Service
 public class CategoriaService {
-    private final CategoriaRepository categorias;
+    private final CategoriaRepository categoriaRepository;
 
-    public CategoriaService(CategoriaRepository categorias) {
-        this.categorias = categorias;
+    public CategoriaService(CategoriaRepository categoriaRepository) {
+        this.categoriaRepository = categoriaRepository;
     }
 
-    public List<CategoriaResponse> listar(String q) {
-        return categorias.findAll().stream()
-                .filter(categoria -> q == null || q.isBlank()
-                        || contem(categoria.getNomeCat(), q))
-                .map(this::resposta)
+    public List<CategoriaResponse> listar(String pesquisa) {
+        return categoriaRepository.findAll().stream()
+                .filter(categoria -> pesquisa == null || pesquisa.isBlank()
+                        || contem(categoria.getNomeCat(), pesquisa))
+                .map(this::mapearResposta)
                 .toList();
     }
 
     public CategoriaResponse buscar(int id) {
-        return resposta(buscarObrigatoria(id));
-    }
-
-    public Categoria buscarEntidadeObrigatoria(int id) {
-        return buscarObrigatoria(id);
+        return mapearResposta(buscarEntidadeObrigatoria(id));
     }
 
     public CategoriaResponse criar(CategoriaRequest request) {
         Categoria categoria = new Categoria();
         categoria.setNomeCat(request.getNomeCat());
-        return resposta(categorias.save(categoria));
+        return mapearResposta(categoriaRepository.save(categoria));
     }
 
     public CategoriaResponse editar(int id, CategoriaRequest request) {
-        Categoria categoria = buscarObrigatoria(id);
+        Categoria categoria = buscarEntidadeObrigatoria(id);
         categoria.setNomeCat(request.getNomeCat());
-        return resposta(categorias.save(categoria));
+        return mapearResposta(categoriaRepository.save(categoria));
     }
 
     public void apagar(int id) {
-        categorias.delete(buscarObrigatoria(id));
+        categoriaRepository.delete(buscarEntidadeObrigatoria(id));
     }
 
-    private Categoria buscarObrigatoria(int id) {
-        return categorias.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+    public Categoria buscarEntidadeObrigatoria(int id) {
+        return categoriaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
     }
 
     private boolean contem(String valor, String q) {
@@ -66,7 +62,4 @@ public class CategoriaService {
         return response;
     }
 
-    private CategoriaResponse resposta(Categoria categoria) {
-        return mapearResposta(categoria);
-    }
 }

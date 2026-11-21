@@ -22,26 +22,27 @@ import java.util.List;
 
 @Service
 public class VendaService {
-    private final VendaRepository vendas;
-    private final ClienteService clientes;
-    private final FuncionarioService funcionarios;
-    private final ProdutoService produtos;
-    private final MetodoPagamentoService metodos;
+    private final VendaRepository vendaRepository;
+    private final ClienteService clienteService;
+    private final FuncionarioService funcionarioService;
+    private final ProdutoService produtoService;
+    private final MetodoPagamentoService metodoPagamentoService;
     private final EntityManager entityManager;
 
-    public VendaService(VendaRepository vendas, ClienteService clientes, FuncionarioService funcionarios,
-                        ProdutoService produtos, MetodoPagamentoService metodos, EntityManager entityManager) {
-        this.vendas = vendas;
-        this.clientes = clientes;
-        this.funcionarios = funcionarios;
-        this.produtos = produtos;
-        this.metodos = metodos;
+    public VendaService(VendaRepository vendaRepository, ClienteService clienteService, FuncionarioService funcionarioService,
+                        ProdutoService produtoService, MetodoPagamentoService metodoPagamentoService, EntityManager entityManager) {
+        this.vendaRepository = vendaRepository;
+        this.clienteService = clienteService;
+        this.funcionarioService = funcionarioService;
+        this.produtoService = produtoService;
+        this.metodoPagamentoService = metodoPagamentoService;
         this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
-    public List<VendaResponse> listar(Integer status, String q) {
-        String termo = q == null || q.isBlank() ? null : q.trim();
+    public List<VendaResponse> listar(Integer status, String pesquisa) {
+        String termo = pesquisa == null || pesquisa.isBlank() ? null : pesquisa.trim();
+
         StoredProcedureQuery consulta = entityManager.createStoredProcedureQuery("dbo.sp_vendas_listar");
         consulta.registerStoredProcedureParameter("status", Integer.class, ParameterMode.IN);
         consulta.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
@@ -49,6 +50,7 @@ public class VendaService {
         consulta.setParameter("q", termo);
         @SuppressWarnings("unchecked")
         List<Number> codigos = consulta.getResultList();
+
         return codigos.stream()
                 .map(codigo -> buscarVendaObrigatoria(codigo.intValue()))
                 .map(this::mapearResposta)
@@ -63,12 +65,13 @@ public class VendaService {
     @Transactional
     public VendaResponse criar(CriarVendaRequest request) {
         Venda venda = new Venda();
+
         venda.setDataVenda(LocalDateTime.now());
-        venda.setClienteVenda(clientes.buscarEntidadeObrigatoria(
+        venda.setClienteVenda(clienteService.buscarEntidadeObrigatoria(
                 FormatadorDocumento.normalizarCpf(request.getClienteCpf())));
-        venda.setFuncVenda(funcionarios.buscarEntidadeObrigatoria(
+        venda.setFuncVenda(funcionarioService.buscarEntidadeObrigatoria(
                 FormatadorDocumento.normalizarCpf(request.getFuncionarioCpf())));
-        return mapearResposta(vendas.save(venda));
+        return mapearResposta(vendaRepository.save(venda));
     }
 
     @Transactional
@@ -131,7 +134,7 @@ public class VendaService {
     }
 
     private Venda buscarVendaObrigatoria(int id) {
-        return vendas.findById(id).orElseThrow(() -> new ResponseStatusException(
+        return vendaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Venda não encontrada"));
     }
 
@@ -139,8 +142,8 @@ public class VendaService {
         VendaResponse response = new VendaResponse();
         response.setCodVenda(venda.getCodVenda());
         response.setDataVenda(venda.getDataVenda());
-        response.setClienteVenda(clientes.mapearResposta(venda.getClienteVenda()));
-        response.setFuncVenda(funcionarios.mapearResposta(venda.getFuncVenda()));
+        response.setClienteVenda(clienteService.mapearResposta(venda.getClienteVenda()));
+        response.setFuncVenda(funcionarioService.mapearResposta(venda.getFuncVenda()));
         response.setValorTotal(venda.getValorTotal());
         response.setStatus(venda.getStatus());
         response.setStatusString(statusTextoBanco(venda.getStatus()));
@@ -149,9 +152,10 @@ public class VendaService {
         consultaResumo.registerStoredProcedureParameter("venda_id", Integer.class, ParameterMode.IN);
         consultaResumo.setParameter("venda_id", venda.getCodVenda());
         Object[] resumo = (Object[]) consultaResumo.getSingleResult();
+
         response.setTotalPago((BigDecimal) resumo[0]);
         response.setQuantidadeProdutos(((Number) resumo[1]).longValue());
-        response.setProdutos(venda.getProdutos().stream().map(produtos::mapearResposta).toList());
+        response.setProdutos(venda.getProdutos().stream().map(produtoService::mapearResposta).toList());
         response.setPagamentos(venda.getPagamentos().stream().map(this::mapearPagamento).toList());
         return response;
     }
@@ -166,7 +170,7 @@ public class VendaService {
     private VendaPagamentoResponse mapearPagamento(VendaPagamento pagamento) {
         VendaPagamentoResponse response = new VendaPagamentoResponse();
         response.setCodVendaPagamento((long) pagamento.getMetodoPagamento().getCodMetodoPag());
-        response.setMetodoPagamento(metodos.mapearResposta(pagamento.getMetodoPagamento()));
+        response.setMetodoPagamento(metodoPagamentoService.mapearResposta(pagamento.getMetodoPagamento()));
         response.setValorPago(pagamento.getValorPago());
         return response;
     }

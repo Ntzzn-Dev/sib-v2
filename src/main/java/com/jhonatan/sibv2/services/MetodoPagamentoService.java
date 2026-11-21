@@ -13,49 +13,45 @@ import java.util.Locale;
 
 @Service
 public class MetodoPagamentoService {
-    private final MetodoPagamentoRepository metodos;
+    private final MetodoPagamentoRepository metodoPagamentoRepository;
 
-    public MetodoPagamentoService(MetodoPagamentoRepository metodos) {
-        this.metodos = metodos;
+    public MetodoPagamentoService(MetodoPagamentoRepository metodoPagamentoRepository) {
+        this.metodoPagamentoRepository = metodoPagamentoRepository;
     }
 
-    public List<MetodoPagamentoResponse> listar(String q) {
-        return metodos.findAll().stream()
-                .filter(metodo -> q == null || q.isBlank()
-                        || contem(metodo.getDescMetodoPag(), q)
-                        || (metodo.isActiveMetodoPag() ? "ativo" : "desativado").contains(q.toLowerCase(Locale.ROOT)))
-                .map(this::resposta)
+    public List<MetodoPagamentoResponse> listar(String pesquisa) {
+        return metodoPagamentoRepository.findAll().stream()
+                .filter(metodo -> pesquisa == null || pesquisa.isBlank()
+                        || contem(metodo.getDescMetodoPag(), pesquisa)
+                        || (metodo.isActiveMetodoPag() ? "ativo" : "desativado").contains(pesquisa.toLowerCase(Locale.ROOT)))
+                .map(this::mapearResposta)
                 .toList();
     }
 
     public MetodoPagamentoResponse buscar(int id) {
-        return resposta(buscarObrigatorio(id));
-    }
-
-    public MetodoPagamento buscarEntidadeObrigatoria(int id) {
-        return buscarObrigatorio(id);
+        return mapearResposta(buscarObrigatorio(id));
     }
 
     public MetodoPagamentoResponse criar(MetodoPagamentoRequest request) {
         MetodoPagamento metodo = new MetodoPagamento();
         metodo.setDescMetodoPag(request.getDescMetodoPag());
         metodo.setActiveMetodoPag(request.isActiveMetodoPag());
-        return resposta(metodos.save(metodo));
+        return mapearResposta(metodoPagamentoRepository.save(metodo));
     }
 
     public MetodoPagamentoResponse editar(int id, MetodoPagamentoRequest request) {
         MetodoPagamento metodo = buscarObrigatorio(id);
         metodo.setDescMetodoPag(request.getDescMetodoPag());
         metodo.setActiveMetodoPag(request.isActiveMetodoPag());
-        return resposta(metodos.save(metodo));
+        return mapearResposta(metodoPagamentoRepository.save(metodo));
     }
 
     public void apagar(int id) {
-        metodos.delete(buscarObrigatorio(id));
+        metodoPagamentoRepository.delete(buscarObrigatorio(id));
     }
 
     private MetodoPagamento buscarObrigatorio(int id) {
-        return metodos.findById(id).orElseThrow(() -> new ResponseStatusException(
+        return metodoPagamentoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Método de pagamento não encontrado"));
     }
 
@@ -71,7 +67,4 @@ public class MetodoPagamentoService {
         return response;
     }
 
-    private MetodoPagamentoResponse resposta(MetodoPagamento metodo) {
-        return mapearResposta(metodo);
-    }
 }

@@ -24,8 +24,10 @@ public class FuncionarioService {
     }
 
     public List<FuncionarioResponse> listar(String pesquisa) {
-        return funcionarioRepository.findAll().stream()
-                .filter(funcionario -> pesquisa == null || pesquisa.isBlank() || corresponde(funcionario, pesquisa))
+        String termo = pesquisa == null || pesquisa.isBlank() ? null : pesquisa.trim();
+        List<Funcionario> funcionarios = funcionarioRepository.findAll();
+        return funcionarios.stream()
+                .filter(funcionario -> termo == null || corresponde(funcionario, termo))
                 .map(this::mapearResposta)
                 .toList();
     }
@@ -81,7 +83,10 @@ public class FuncionarioService {
             minimoAdmin(funcionario);
         }
 
-        return mapearResposta(funcionarioRepository.save(funcionario));
+        Funcionario atualizado = funcionarioRepository.save(funcionario);
+        enderecoService.associarPessoa(atualizado.getEndPessoa(), atualizado.getCpfPessoa());
+
+        return mapearResposta(atualizado);
     }
 
     public void apagar(String cpf) {

@@ -44,16 +44,16 @@ public class EnderecoService {
             new EstadoResponse("SE", "Sergipe"),
             new EstadoResponse("TO", "Tocantins"));
 
-    private final EnderecoRepository enderecos;
+    private final EnderecoRepository enderecoRepository;
 
-    public EnderecoService(EnderecoRepository enderecos) {
-        this.enderecos = enderecos;
+    public EnderecoService(EnderecoRepository enderecoRepository) {
+        this.enderecoRepository = enderecoRepository;
     }
 
-    public List<EnderecoResponse> listar(String q) {
-        return enderecos.findAll().stream()
-                .filter(endereco -> q == null || q.isBlank() || corresponde(endereco, q))
-                .map(this::resposta)
+    public List<EnderecoResponse> listar(String pesquisa) {
+        return enderecoRepository.findAll().stream()
+                .filter(endereco -> pesquisa == null || pesquisa.isBlank() || corresponde(endereco, pesquisa))
+                .map(this::mapearResposta)
                 .toList();
     }
 
@@ -62,48 +62,12 @@ public class EnderecoService {
     }
 
     public EnderecoResponse buscar(int id) {
-        return resposta(buscarObrigatorio(id));
+        return mapearResposta(buscarObrigatorio(id));
     }
 
     public EnderecoResponse criar(EnderecoRequest request) {
         Endereco endereco = new Endereco();
-        aplicarDados(endereco, request);
-        return resposta(enderecos.save(endereco));
-    }
 
-    public EnderecoResponse editar(int id, EnderecoRequest request) {
-        Endereco endereco = buscarObrigatorio(id);
-        aplicarDados(endereco, request);
-        return resposta(enderecos.save(endereco));
-    }
-
-    public void apagar(int id) {
-        enderecos.delete(buscarObrigatorio(id));
-    }
-
-    public Endereco buscarReferencia(EnderecoRequest request) {
-        if (request == null || request.getCodEnd() <= 0) {
-            return null;
-        }
-        return buscarObrigatorio(request.getCodEnd());
-    }
-
-    public Endereco buscarPorPessoa(String cpfPessoa) {
-        return enderecos.findFirstByCpfPessoa(cpfPessoa).orElse(null);
-    }
-
-    public void associarPessoa(Endereco endereco, String cpfPessoa) {
-        if (endereco == null) return;
-        endereco.setCpfPessoa(cpfPessoa);
-        enderecos.save(endereco);
-    }
-
-    private Endereco buscarObrigatorio(int id) {
-        return enderecos.findById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Endereço não encontrado"));
-    }
-
-    private void aplicarDados(Endereco endereco, EnderecoRequest request) {
         String uf = request.getUf().trim().toUpperCase(Locale.ROOT);
         if (ESTADOS.stream().noneMatch(estado -> estado.getUf().equals(uf))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UF inválida");
@@ -116,6 +80,53 @@ public class EnderecoService {
         endereco.setLogradouro(request.getLogradouro());
         endereco.setNumero(request.getNumero());
         endereco.setComplemento(request.getComplemento());
+
+        return mapearResposta(enderecoRepository.save(endereco));
+    }
+
+    public EnderecoResponse editar(int id, EnderecoRequest request) {
+        Endereco endereco = buscarObrigatorio(id);
+
+        String uf = request.getUf().trim().toUpperCase(Locale.ROOT);
+        if (ESTADOS.stream().noneMatch(estado -> estado.getUf().equals(uf))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UF inválida");
+        }
+
+        endereco.setUf(uf);
+        endereco.setCep(FormatadorDocumento.formatarCep(request.getCep()));
+        endereco.setCidade(request.getCidade());
+        endereco.setBairro(request.getBairro());
+        endereco.setLogradouro(request.getLogradouro());
+        endereco.setNumero(request.getNumero());
+        endereco.setComplemento(request.getComplemento());
+
+        return mapearResposta(enderecoRepository.save(endereco));
+    }
+
+    public void apagar(int id) {
+        enderecoRepository.delete(buscarObrigatorio(id));
+    }
+
+    public Endereco buscarReferencia(EnderecoRequest request) {
+        if (request == null || request.getCodEnd() <= 0) {
+            return null;
+        }
+        return buscarObrigatorio(request.getCodEnd());
+    }
+
+    public Endereco buscarPorPessoa(String cpfPessoa) {
+        return enderecoRepository.findFirstByCpfPessoa(cpfPessoa).orElse(null);
+    }
+
+    public void associarPessoa(Endereco endereco, String cpfPessoa) {
+        if (endereco == null) return;
+        endereco.setCpfPessoa(cpfPessoa);
+        enderecoRepository.save(endereco);
+    }
+
+    private Endereco buscarObrigatorio(int id) {
+        return enderecoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Endereço não encontrado"));
     }
 
     private boolean corresponde(Endereco endereco, String q) {
@@ -143,7 +154,4 @@ public class EnderecoService {
         return response;
     }
 
-    private EnderecoResponse resposta(Endereco endereco) {
-        return mapearResposta(endereco);
-    }
 }

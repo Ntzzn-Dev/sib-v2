@@ -23,16 +23,22 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProdutoService {
-    private final ProdutoRepository produtos;
+    private final ProdutoRepository produtoRepository;
+    private final MarcaService marcaService;
+    private final CategoriaService categoriaService;
     private final EntityManager entityManager;
 
-    public ProdutoService(ProdutoRepository produtos, EntityManager entityManager) {
-        this.produtos = produtos;
+    public ProdutoService(ProdutoRepository produtoRepository, MarcaService marcaService,
+                          CategoriaService categoriaService, EntityManager entityManager) {
+        this.produtoRepository = produtoRepository;
+        this.marcaService = marcaService;
+        this.categoriaService = categoriaService;
         this.entityManager = entityManager;
     }
 
-    public List<ProdutoResponse> listar(String q, Boolean vendido) {
-        String termo = q == null || q.isBlank() ? null : q.trim();
+    public List<ProdutoResponse> listar(String pesquisa, Boolean vendido) {
+        String termo = pesquisa == null || pesquisa.isBlank() ? null : pesquisa.trim();
+
         StoredProcedureQuery query = entityManager.createStoredProcedureQuery("dbo.sp_produtos_listar");
         query.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
         query.registerStoredProcedureParameter("vendido", Boolean.class, ParameterMode.IN);
@@ -40,59 +46,70 @@ public class ProdutoService {
         query.setParameter("vendido", vendido);
         @SuppressWarnings("unchecked")
         List<Number> resultados = query.getResultList();
+
         List<Integer> ids = resultados.stream().map(Number::intValue).toList();
-        Map<Integer, Produto> porCodigo = produtos.findAllById(ids).stream()
+        Map<Integer, Produto> porCodigo = produtoRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(Produto::getCodProd, Function.identity()));
         return ids.stream().map(porCodigo::get).filter(java.util.Objects::nonNull)
-                .map(this::resposta).toList();
+                .map(this::mapearResposta).toList();
     }
 
     public ProdutoResponse buscar(int id) {
-        return resposta(buscarEntidadeObrigatoria(id));
+        return mapearResposta(buscarEntidadeObrigatoria(id));
     }
 
     public ProdutoResponse criar(ProdutoRequest request) {
+        String tamanho = request.getTamanhoProd() == null ? null
+                : request.getTamanhoProd().trim().toUpperCase(Locale.ROOT);
+        Marca marca = buscarMarca(request);
+        Categoria categoria = buscarCategoria(request);
+
         Produto produto = new Produto();
-        produto.setMarcaProd(buscarMarca(request));
-        produto.setCatProd(buscarCategoria(request));
+        produto.setMarcaProd(marca);
+        produto.setCatProd(categoria);
         produto.setSelled(false);
-        aplicarDados(produto, request);
-        return resposta(produtos.save(produto));
+        produto.setDescProd(request.getDescProd());
+        produto.setPrecoProd(request.getPrecoProd());
+        produto.setTamanhoProd(tamanho);
+        return mapearResposta(produtoRepository.save(produto));
     }
 
     public ProdutoResponse editar(int id, ProdutoRequest request) {
         Produto produto = buscarEntidadeObrigatoria(id);
-        produto.setMarcaProd(buscarMarca(request));
-        produto.setCatProd(buscarCategoria(request));
-        aplicarDados(produto, request);
-        return resposta(produtos.save(produto));
+        String tamanho = request.getTamanhoProd() == null ? null
+                : request.getTamanhoProd().trim().toUpperCase(Locale.ROOT);
+        Marca marca = buscarMarca(request);
+        Categoria categoria = buscarCategoria(request);
+
+        produto.setMarcaProd(marca);
+        produto.setCatProd(categoria);
+        produto.setDescProd(request.getDescProd());
+        produto.setPrecoProd(request.getPrecoProd());
+        produto.setTamanhoProd(tamanho);
+
+        return mapearResposta(produtoRepository.save(produto));
     }
 
     public void apagar(int id) {
         Produto produto = buscarEntidadeObrigatoria(id);
-        produtos.delete(produto);
+        produtoRepository.delete(produto);
     }
 
     public Produto buscarEntidadeObrigatoria(int id) {
-        return produtos.findById(id).orElseThrow(() -> new ResponseStatusException(
+        return produtoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Produto não encontrado"));
     }
 
     private Marca buscarMarca(ProdutoRequest request) {
         if (request.getMarcaProd() == null || request.getMarcaProd().getCodMarca() <= 0) return null;
-        return entityManager.getReference(Marca.class, request.getMarcaProd().getCodMarca());
+        return marcaService.buscarEntidadeObrigatoria(request.getMarcaProd().getCodMarca());
     }
 
     private Categoria buscarCategoria(ProdutoRequest request) {
-        if (request.getCatProd() == null || request.getCatProd().getCodCat() <= 0) return null;
-        return entityManager.getReference(Categoria.class, request.getCatProd().getCodCat());
-    }
-
-    private void aplicarDados(Produto produto, ProdutoRequest request) {
-        produto.setDescProd(request.getDescProd());
-        produto.setPrecoProd(request.getPrecoProd());
-        produto.setTamanhoProd(request.getTamanhoProd() == null ? null
-                : request.getTamanhoProd().trim().toUpperCase(Locale.ROOT));
+        if (request.getCatProd() == null || request.getCatProd().getCodCat() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Categoria do produto é obrigatória.");
+        }
+        return categoriaService.buscarEntidadeObrigatoria(request.getCatProd().getCodCat());
     }
 
     public ProdutoResponse mapearResposta(Produto produto) {
@@ -100,29 +117,27 @@ public class ProdutoService {
         response.setCodProd(produto.getCodProd());
         response.setDescProd(produto.getDescProd());
         response.setTamanhoProd(produto.getTamanhoProd());
-        response.setMarcaProd(respostaMarca(produto.getMarcaProd()));
-        response.setCatProd(respostaCategoria(produto.getCatProd()));
+        response.setMarcaProd(mapearMarcaResposta(produto.getMarcaProd()));
+        response.setCatProd(mapearCategoriaResposta(produto.getCatProd()));
         response.setSelled(produto.isSelled());
+
         StoredProcedureQuery disponibilidade = entityManager.createStoredProcedureQuery("dbo.sp_produto_disponibilidade");
         disponibilidade.registerStoredProcedureParameter("cod_prod", Integer.class, ParameterMode.IN);
         disponibilidade.setParameter("cod_prod", produto.getCodProd());
+
         response.setDisponivel((Boolean) disponibilidade.getSingleResult());
         response.setPrecoProd(produto.getPrecoProd());
         return response;
     }
 
-    private ProdutoResponse resposta(Produto produto) {
-        return mapearResposta(produto);
-    }
-
-    private MarcaResponse respostaMarca(Marca marca) {
+    private MarcaResponse mapearMarcaResposta(Marca marca) {
         MarcaResponse response = new MarcaResponse();
         response.setCodMarca(marca.getCodMarca());
         response.setNomeMarca(marca.getNomeMarca());
         return response;
     }
 
-    private CategoriaResponse respostaCategoria(Categoria categoria) {
+    private CategoriaResponse mapearCategoriaResposta(Categoria categoria) {
         CategoriaResponse response = new CategoriaResponse();
         response.setCodCat(categoria.getCodCat());
         response.setNomeCat(categoria.getNomeCat());
