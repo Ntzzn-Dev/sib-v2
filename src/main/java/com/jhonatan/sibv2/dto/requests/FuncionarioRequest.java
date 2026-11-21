@@ -11,6 +11,7 @@ public class FuncionarioRequest {
     private String nomePessoa;
     private String telPessoa;
     private BigDecimal salarioFunc = BigDecimal.ZERO;
+    private Integer perfil;
     private String senha;
     private EnderecoRequest endPessoa;
 }

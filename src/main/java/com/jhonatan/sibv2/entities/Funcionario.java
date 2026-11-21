@@ -19,10 +19,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @AllArgsConstructor
 @Data
 public class Funcionario extends Pessoas{
+    public static final int PERFIL_ADMIN = 0;
+    public static final int PERFIL_ATENDENTE = 1;
+
     @Column(name = "salario")
     private BigDecimal salarioFunc = BigDecimal.ZERO;
+    @Column(name = "perfil", nullable = false)
+    private int perfil = PERFIL_ATENDENTE;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "senha")
+    @Column(name = "senha", nullable = false)
     private String senha;
 
 }

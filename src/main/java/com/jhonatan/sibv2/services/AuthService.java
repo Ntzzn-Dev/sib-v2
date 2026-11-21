@@ -26,6 +26,7 @@ public class AuthService {
         LoginResponse response = new LoginResponse();
         response.setCpfPessoa(FormatadorDocumento.formatarCpf(funcionario.getCpfPessoa()));
         response.setNomePessoa(funcionario.getNomePessoa());
+        response.setPerfil(funcionario.getPerfil());
         response.setMessage("Login realizado");
         return response;
     }

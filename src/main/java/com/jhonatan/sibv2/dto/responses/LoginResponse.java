@@ -8,5 +8,6 @@ import lombok.NoArgsConstructor;
 public class LoginResponse {
     private String cpfPessoa;
     private String nomePessoa;
+    private int perfil;
     private String message;
 }
