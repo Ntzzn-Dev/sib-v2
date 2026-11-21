@@ -9,6 +9,8 @@ import com.jhonatan.sibv2.entities.Marca;
 import com.jhonatan.sibv2.entities.Produto;
 import com.jhonatan.sibv2.repositories.ProdutoRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.StoredProcedureQuery;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,18 +33,14 @@ public class ProdutoService {
 
     public List<ProdutoResponse> listar(String q, Boolean vendido) {
         String termo = q == null || q.isBlank() ? null : q.trim();
-        String sql = Boolean.FALSE.equals(vendido)
-                ? "SELECT cod_prod FROM dbo.fn_produtos_disponiveis() " +
-                    "WHERE (:q IS NULL OR descricao LIKE '%' + :q + '%' OR marca_nome LIKE '%' + :q + '%' " +
-                    "OR categoria_nome LIKE '%' + :q + '%') ORDER BY descricao"
-                : "SELECT cod_prod FROM dbo.vw_produtos_estoque " +
-                    "WHERE (:vendido IS NULL OR is_selled=:vendido) " +
-                    "AND (:q IS NULL OR descricao LIKE '%' + :q + '%' OR marca_nome LIKE '%' + :q + '%' " +
-                    "OR categoria_nome LIKE '%' + :q + '%') ORDER BY descricao";
-        var query = entityManager.createNativeQuery(sql).setParameter("q", termo);
-        if (!Boolean.FALSE.equals(vendido)) query.setParameter("vendido", vendido);
+        StoredProcedureQuery query = entityManager.createStoredProcedureQuery("dbo.sp_produtos_listar");
+        query.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
+        query.registerStoredProcedureParameter("vendido", Boolean.class, ParameterMode.IN);
+        query.setParameter("q", termo);
+        query.setParameter("vendido", vendido);
         @SuppressWarnings("unchecked")
-        List<Integer> ids = query.getResultList();
+        List<Number> resultados = query.getResultList();
+        List<Integer> ids = resultados.stream().map(Number::intValue).toList();
         Map<Integer, Produto> porCodigo = produtos.findAllById(ids).stream()
                 .collect(Collectors.toMap(Produto::getCodProd, Function.identity()));
         return ids.stream().map(porCodigo::get).filter(java.util.Objects::nonNull)
@@ -105,10 +103,10 @@ public class ProdutoService {
         response.setMarcaProd(respostaMarca(produto.getMarcaProd()));
         response.setCatProd(respostaCategoria(produto.getCatProd()));
         response.setSelled(produto.isSelled());
-        response.setDisponivel((Boolean) entityManager.createNativeQuery(
-                        "SELECT dbo.fn_produto_disponivel(:codProd)")
-                .setParameter("codProd", produto.getCodProd())
-                .getSingleResult());
+        StoredProcedureQuery disponibilidade = entityManager.createStoredProcedureQuery("dbo.sp_produto_disponibilidade");
+        disponibilidade.registerStoredProcedureParameter("cod_prod", Integer.class, ParameterMode.IN);
+        disponibilidade.setParameter("cod_prod", produto.getCodProd());
+        response.setDisponivel((Boolean) disponibilidade.getSingleResult());
         response.setPrecoProd(produto.getPrecoProd());
         return response;
     }

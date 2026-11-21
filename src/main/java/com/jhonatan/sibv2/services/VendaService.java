@@ -8,16 +8,17 @@ import com.jhonatan.sibv2.dto.responses.VendaResponse;
 import com.jhonatan.sibv2.entities.*;
 import com.jhonatan.sibv2.repositories.VendaRepository;
 import com.jhonatan.sibv2.utils.FormatadorDocumento;
-import org.springframework.http.HttpStatus;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.StoredProcedureQuery;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class VendaService {
@@ -40,13 +41,16 @@ public class VendaService {
 
     @Transactional(readOnly = true)
     public List<VendaResponse> listar(Integer status, String q) {
-        if (status != null && (status < 0 || status > 2)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Status deve ser 0 (aberta), 1 (paga) ou 2 (cancelada)");
-        }
-        return vendas.findAll().stream()
-                .filter(venda -> status == null || venda.getStatus() == status)
-                .filter(venda -> q == null || q.isBlank() || corresponde(venda, q))
+        String termo = q == null || q.isBlank() ? null : q.trim();
+        StoredProcedureQuery consulta = entityManager.createStoredProcedureQuery("dbo.sp_vendas_listar");
+        consulta.registerStoredProcedureParameter("status", Integer.class, ParameterMode.IN);
+        consulta.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
+        consulta.setParameter("status", status);
+        consulta.setParameter("q", termo);
+        @SuppressWarnings("unchecked")
+        List<Number> codigos = consulta.getResultList();
+        return codigos.stream()
+                .map(codigo -> buscarVendaObrigatoria(codigo.intValue()))
                 .map(this::mapearResposta)
                 .toList();
     }
@@ -56,135 +60,79 @@ public class VendaService {
         return mapearResposta(buscarVendaObrigatoria(id));
     }
 
+    @Transactional
     public VendaResponse criar(CriarVendaRequest request) {
         Venda venda = new Venda();
-        venda.setDataVenda(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")));
+        venda.setDataVenda(LocalDateTime.now());
         venda.setClienteVenda(clientes.buscarEntidadeObrigatoria(
-                FormatadorDocumento.formatarCpf(request.getClienteCpf())));
+                FormatadorDocumento.normalizarCpf(request.getClienteCpf())));
         venda.setFuncVenda(funcionarios.buscarEntidadeObrigatoria(
-                FormatadorDocumento.formatarCpf(request.getFuncionarioCpf())));
+                FormatadorDocumento.normalizarCpf(request.getFuncionarioCpf())));
         return mapearResposta(vendas.save(venda));
     }
 
     @Transactional
     public VendaResponse adicionarProdutos(int id, ListaProdutosRequest request) {
-        Venda venda = buscarVendaObrigatoria(id);
-        validarAberta(venda);
-        if (request.getCodigos() == null || request.getCodigos().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe ao menos um produto");
-        }
-
-        for (Integer codigo : request.getCodigos()) {
-            Produto produto = produtos.buscarEntidadeObrigatoria(codigo);
-            if (produto.isSelled()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Este produto já foi vendido e não está disponível.");
-            }
-            if (venda.getProdutos().stream().anyMatch(item -> item.getCodProd() == codigo)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Este produto já pertence a esta venda.");
-            }
-            boolean pertenceOutraVendaAberta = vendas.findAll().stream()
-                    .filter(outra -> outra.getCodVenda() != id && outra.getStatus() == 0)
-                    .anyMatch(outra -> outra.getProdutos().stream()
-                            .anyMatch(item -> item.getCodProd() == codigo));
-            if (pertenceOutraVendaAberta) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Este produto já pertence a outra venda em aberto.");
-            }
-            venda.addProdutos(produto);
-            venda.setValorTotal(venda.getValorTotal() + produto.getPrecoProd());
-        }
-        vendas.saveAndFlush(venda);
-        venda.getProdutos().forEach(entityManager::refresh);
-        return mapearResposta(venda);
+        StoredProcedureQuery procedure = entityManager.createStoredProcedureQuery("dbo.sp_venda_adicionar_produtos");
+        procedure.registerStoredProcedureParameter("venda_id", Integer.class, ParameterMode.IN);
+        procedure.registerStoredProcedureParameter("produtos_json", String.class, ParameterMode.IN);
+        procedure.setParameter("venda_id", id);
+        procedure.setParameter("produtos_json", produtosJson(request.getCodigos()));
+        procedure.execute();
+        entityManager.clear();
+        return mapearResposta(buscarVendaObrigatoria(id));
     }
 
     @Transactional
     public VendaResponse removerProduto(int id, int produtoId) {
-        Venda venda = buscarVendaObrigatoria(id);
-        validarAberta(venda);
-        Produto produto = venda.getProdutos().stream()
-                .filter(item -> item.getCodProd() == produtoId)
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Este produto não pertence a esta venda."));
-        venda.getProdutos().remove(produto);
-        venda.setValorTotal(Math.max(0, venda.getValorTotal() - produto.getPrecoProd()));
-        vendas.saveAndFlush(venda);
-        return mapearResposta(venda);
+        StoredProcedureQuery procedure = entityManager.createStoredProcedureQuery("dbo.sp_venda_remover_produto");
+        procedure.registerStoredProcedureParameter("venda_id", Integer.class, ParameterMode.IN);
+        procedure.registerStoredProcedureParameter("produto_id", Integer.class, ParameterMode.IN);
+        procedure.setParameter("venda_id", id);
+        procedure.setParameter("produto_id", produtoId);
+        procedure.execute();
+        entityManager.clear();
+        return mapearResposta(buscarVendaObrigatoria(id));
     }
 
     @Transactional
     public VendaResponse pagar(int id, List<PagamentoRequest> request) {
-        Venda venda = buscarVendaObrigatoria(id);
-        validarAberta(venda);
-        if (request == null || request.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe as formas de pagamento");
-        }
-
-        double restante = venda.getValorTotal();
-        List<VendaPagamento> pagamentos = new java.util.ArrayList<>();
-        for (PagamentoRequest item : request) {
-            MetodoPagamento metodo = metodos.buscarEntidadeObrigatoria(item.getMetodoPagamentoId());
-            double valor = Math.min(item.getValorPago(), restante);
-            VendaPagamento pagamento = new VendaPagamento();
-            pagamento.setVenda(venda);
-            pagamento.setMetodoPagamento(metodo);
-            pagamento.setValorPago(valor);
-            pagamentos.add(pagamento);
-            restante -= valor;
-            if (restante <= 0) {
-                break;
-            }
-        }
-
-        venda.getPagamentos().clear();
-        for (VendaPagamento pagamento : pagamentos) {
-            venda.addPagamentos(pagamento);
-        }
-        vendas.saveAndFlush(venda);
-        entityManager.createNativeQuery("EXEC dbo.finalizar_venda :vendaId")
-                .setParameter("vendaId", id)
-                .executeUpdate();
-        entityManager.refresh(venda);
-        venda.getProdutos().forEach(entityManager::refresh);
-        return mapearResposta(venda);
+        StoredProcedureQuery procedure = entityManager.createStoredProcedureQuery("dbo.sp_venda_pagar");
+        procedure.registerStoredProcedureParameter("venda_id", Integer.class, ParameterMode.IN);
+        procedure.registerStoredProcedureParameter("pagamentos_json", String.class, ParameterMode.IN);
+        procedure.setParameter("venda_id", id);
+        procedure.setParameter("pagamentos_json", pagamentosJson(request));
+        procedure.execute();
+        entityManager.clear();
+        return mapearResposta(buscarVendaObrigatoria(id));
     }
 
     @Transactional
     public VendaResponse cancelar(int id) {
-        Venda venda = buscarVendaObrigatoria(id);
-        validarAberta(venda);
-        venda.setStatus(2);
-        return mapearResposta(vendas.save(venda));
+        StoredProcedureQuery procedure = entityManager.createStoredProcedureQuery("dbo.sp_venda_cancelar");
+        procedure.registerStoredProcedureParameter("venda_id", Integer.class, ParameterMode.IN);
+        procedure.setParameter("venda_id", id);
+        procedure.execute();
+        entityManager.clear();
+        return mapearResposta(buscarVendaObrigatoria(id));
+    }
+
+    private String produtosJson(List<Integer> codigos) {
+        if (codigos == null) return "null";
+        return codigos.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",", "[", "]"));
+    }
+
+    private String pagamentosJson(List<PagamentoRequest> pagamentos) {
+        if (pagamentos == null) return "null";
+        return pagamentos.stream().map(item -> item == null ? "null"
+                : "{\"metodoPagamentoId\":" + item.getMetodoPagamentoId()
+                    + ",\"valorPago\":" + (item.getValorPago() == null ? "null" : item.getValorPago().toPlainString()) + "}")
+                .collect(java.util.stream.Collectors.joining(",", "[", "]"));
     }
 
     private Venda buscarVendaObrigatoria(int id) {
         return vendas.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Venda não encontrada"));
-    }
-
-    private void validarAberta(Venda venda) {
-        if (venda.getStatus() == 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Venda já está finalizada");
-        }
-        if (venda.getStatus() == 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Venda já está cancelada");
-        }
-    }
-
-    private boolean corresponde(Venda venda, String q) {
-        String termo = q.toLowerCase(Locale.ROOT);
-        return contem(venda.getClienteVenda().getNomePessoa(), termo)
-                || contem(venda.getFuncVenda().getNomePessoa(), termo)
-                || contem(venda.getDataVenda(), termo)
-                || String.valueOf(venda.getValorTotal()).contains(termo)
-                || venda.getStatusString().toLowerCase(Locale.ROOT).contains(termo);
-    }
-
-    private boolean contem(String valor, String termo) {
-        return valor != null && valor.toLowerCase(Locale.ROOT).contains(termo);
     }
 
     private VendaResponse mapearResposta(Venda venda) {
@@ -195,15 +143,29 @@ public class VendaService {
         response.setFuncVenda(funcionarios.mapearResposta(venda.getFuncVenda()));
         response.setValorTotal(venda.getValorTotal());
         response.setStatus(venda.getStatus());
-        response.setStatusString(venda.getStatusString());
+        response.setStatusString(statusTextoBanco(venda.getStatus()));
+
+        StoredProcedureQuery consultaResumo = entityManager.createStoredProcedureQuery("dbo.sp_venda_resumo");
+        consultaResumo.registerStoredProcedureParameter("venda_id", Integer.class, ParameterMode.IN);
+        consultaResumo.setParameter("venda_id", venda.getCodVenda());
+        Object[] resumo = (Object[]) consultaResumo.getSingleResult();
+        response.setTotalPago((BigDecimal) resumo[0]);
+        response.setQuantidadeProdutos(((Number) resumo[1]).longValue());
         response.setProdutos(venda.getProdutos().stream().map(produtos::mapearResposta).toList());
         response.setPagamentos(venda.getPagamentos().stream().map(this::mapearPagamento).toList());
         return response;
     }
 
+    private String statusTextoBanco(int status) {
+        StoredProcedureQuery consulta = entityManager.createStoredProcedureQuery("dbo.sp_venda_status_texto");
+        consulta.registerStoredProcedureParameter("status", Integer.class, ParameterMode.IN);
+        consulta.setParameter("status", status);
+        return (String) consulta.getSingleResult();
+    }
+
     private VendaPagamentoResponse mapearPagamento(VendaPagamento pagamento) {
         VendaPagamentoResponse response = new VendaPagamentoResponse();
-        response.setCodVendaPagamento(pagamento.getCodVendaPagamento());
+        response.setCodVendaPagamento((long) pagamento.getMetodoPagamento().getCodMetodoPag());
         response.setMetodoPagamento(metodos.mapearResposta(pagamento.getMetodoPagamento()));
         response.setValorPago(pagamento.getValorPago());
         return response;

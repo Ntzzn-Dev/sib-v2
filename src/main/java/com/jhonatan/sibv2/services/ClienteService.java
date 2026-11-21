@@ -5,6 +5,8 @@ import com.jhonatan.sibv2.dto.responses.ClienteResponse;
 import com.jhonatan.sibv2.entities.Cliente;
 import com.jhonatan.sibv2.repositories.ClienteRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.StoredProcedureQuery;
 import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,16 +30,11 @@ public class ClienteService {
 
     public List<ClienteResponse> listar(String q) {
         String termo = q == null || q.isBlank() ? null : q.trim();
+        StoredProcedureQuery consulta = entityManager.createStoredProcedureQuery("dbo.sp_clientes_listar");
+        consulta.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
+        consulta.setParameter("q", termo);
         @SuppressWarnings("unchecked")
-        List<Object[]> linhas = entityManager.createNativeQuery("""
-                SELECT cpf,total_vendas,vendas_finalizadas,total_gasto,ultima_venda
-                FROM dbo.vw_clientes_compras
-                WHERE (:q IS NULL OR nome LIKE '%' + :q + '%' OR cpf LIKE '%' + :q + '%'
-                    OR telefone LIKE '%' + :q + '%')
-                ORDER BY nome
-                """)
-                .setParameter("q", termo)
-                .getResultList();
+        List<Object[]> linhas = consulta.getResultList();
         return linhas.stream().map(linha -> {
             ClienteResponse response = mapearResposta(buscarEntidadeObrigatoria((String) linha[0]));
             response.setTotalVendas(((Number) linha[1]).intValue());
@@ -89,13 +86,11 @@ public class ClienteService {
         response.setCpfPessoa(FormatadorDocumento.formatarCpf(cliente.getCpfPessoa()));
         response.setNomePessoa(cliente.getNomePessoa());
         response.setTelPessoa(cliente.getTelPessoa());
+        StoredProcedureQuery consultaResumo = entityManager.createStoredProcedureQuery("dbo.sp_cliente_resumo");
+        consultaResumo.registerStoredProcedureParameter("cpf_cliente", String.class, ParameterMode.IN);
+        consultaResumo.setParameter("cpf_cliente", cliente.getCpfPessoa());
         @SuppressWarnings("unchecked")
-        List<Object[]> resumoCliente = entityManager.createNativeQuery("""
-                SELECT total_vendas,vendas_finalizadas,total_gasto,ultima_venda
-                FROM dbo.fn_cliente_resumo(:cpf)
-                """)
-                .setParameter("cpf", cliente.getCpfPessoa())
-                .getResultList();
+        List<Object[]> resumoCliente = consultaResumo.getResultList();
         if (!resumoCliente.isEmpty()) {
             Object[] resumo = resumoCliente.getFirst();
             response.setTotalVendas(((Number) resumo[0]).intValue());
