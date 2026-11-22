@@ -10,6 +10,7 @@ public class FuncionarioResponse {
     private String cpfPessoa;
     private String nomePessoa;
     private String telPessoa;
+    private String email;
     private BigDecimal salarioFunc;
     private int perfil;
     private EnderecoResponse endPessoa;

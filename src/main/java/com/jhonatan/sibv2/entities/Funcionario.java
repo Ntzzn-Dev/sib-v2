@@ -26,6 +26,8 @@ public class Funcionario extends Pessoas{
     private BigDecimal salarioFunc = BigDecimal.ZERO;
     @Column(name = "perfil", nullable = false)
     private int perfil = PERFIL_ATENDENTE;
+    @Column(name = "email", length = 254)
+    private String email;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "senha", nullable = false)
     private String senha;

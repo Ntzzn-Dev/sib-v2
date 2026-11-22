@@ -1,6 +1,9 @@
 package com.jhonatan.sibv2.repositories;
 import com.jhonatan.sibv2.entities.Endereco;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
 public interface EnderecoRepository extends JpaRepository<Endereco, Integer> {
-    java.util.Optional<Endereco> findFirstByCpfPessoa(String cpfPessoa);
+    Optional<Endereco> findFirstByCpfPessoa(String cpfPessoa);
 }

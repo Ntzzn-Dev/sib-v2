@@ -20,6 +20,7 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
 
     private static final String LOGIN_PATH = "/api/auth/login";
     private static final String LOGOUT_PATH = "/api/auth/logout";
+    private static final String PROFILE_PATH = "/api/auth/me";
     private static final String EMPLOYEE_PATH = "/api/funcionarios";
     private static final String ADDRESS_PATH = "/api/enderecos";
     private final FuncionarioRepository funcionarioRepository;
@@ -28,6 +29,11 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws IOException {
         if (isReadOrAuthRequest(request) || isBootstrapSignup(request)) {
+            return true;
+        }
+        if (PROFILE_PATH.equals(request.getRequestURI())
+                && (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.PUT.matches(request.getMethod()))
+                && isLoggedIn(request)) {
             return true;
         }
         if (isLoggedIn(request) && isAllowedAttendantMutation(request)) {
@@ -51,8 +57,8 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI();
 
         return HttpMethod.OPTIONS.matches(method)
-                || HttpMethod.GET.matches(method)
-                || HttpMethod.HEAD.matches(method)
+                || HttpMethod.GET.matches(method) && !PROFILE_PATH.equals(path)
+                || HttpMethod.HEAD.matches(method) && !PROFILE_PATH.equals(path)
                 || LOGIN_PATH.equals(path)
                 || LOGOUT_PATH.equals(path);
     }
@@ -67,7 +73,8 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
 
     private boolean isBootstrapSignup(HttpServletRequest request) {
         return HttpMethod.POST.matches(request.getMethod())
-                && EMPLOYEE_PATH.equals(request.getRequestURI())
+                && (EMPLOYEE_PATH.equals(request.getRequestURI())
+                || ADDRESS_PATH.equals(request.getRequestURI()))
                 && funcionarioRepository.count() == 0;
     }
 

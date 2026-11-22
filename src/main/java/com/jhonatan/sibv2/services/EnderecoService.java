@@ -4,6 +4,7 @@ import com.jhonatan.sibv2.dto.requests.EnderecoRequest;
 import com.jhonatan.sibv2.dto.responses.EstadoResponse;
 import com.jhonatan.sibv2.dto.responses.EnderecoResponse;
 import com.jhonatan.sibv2.entities.Endereco;
+import com.jhonatan.sibv2.entities.Funcionario;
 import com.jhonatan.sibv2.repositories.EnderecoRepository;
 import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
@@ -122,6 +123,40 @@ public class EnderecoService {
         if (endereco == null) return;
         endereco.setCpfPessoa(cpfPessoa);
         enderecoRepository.save(endereco);
+    }
+
+    public void desassociarPessoa(Endereco endereco, String cpfPessoa) {
+        if (endereco == null || !cpfPessoa.equals(endereco.getCpfPessoa())) return;
+        endereco.setCpfPessoa(null);
+        enderecoRepository.save(endereco);
+    }
+
+    public void salvarParaPessoa(Funcionario funcionario, EnderecoRequest request) {
+        Endereco endereco = buscarPorPessoa(funcionario.getCpfPessoa());
+        if (endereco == null && funcionario.getEndPessoa() != null) endereco = funcionario.getEndPessoa();
+        if (endereco == null) endereco = new Endereco();
+        if (request.getUf() == null || request.getUf().isBlank()
+                || request.getCep() == null || request.getCep().isBlank()
+                || request.getCidade() == null || request.getCidade().isBlank()
+                || request.getBairro() == null || request.getBairro().isBlank()
+                || request.getLogradouro() == null || request.getLogradouro().isBlank()
+                || request.getNumero() == null || request.getNumero().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Preencha UF, CEP, cidade, bairro, logradouro e número para atualizar o endereço.");
+        }
+        String uf = request.getUf().trim().toUpperCase(Locale.ROOT);
+        if (ESTADOS.stream().noneMatch(estado -> estado.getUf().equals(uf))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UF inválida");
+        }
+        endereco.setUf(uf);
+        endereco.setCep(FormatadorDocumento.formatarCep(request.getCep()));
+        endereco.setCidade(request.getCidade().trim());
+        endereco.setBairro(request.getBairro().trim());
+        endereco.setLogradouro(request.getLogradouro().trim());
+        endereco.setNumero(request.getNumero().trim());
+        endereco.setComplemento(request.getComplemento());
+        endereco.setCpfPessoa(funcionario.getCpfPessoa());
+        funcionario.setEndPessoa(enderecoRepository.save(endereco));
     }
 
     private Endereco buscarObrigatorio(int id) {

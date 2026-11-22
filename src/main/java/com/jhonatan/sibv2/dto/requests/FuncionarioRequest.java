@@ -10,6 +10,7 @@ public class FuncionarioRequest {
     private String cpfPessoa;
     private String nomePessoa;
     private String telPessoa;
+    private String email;
     private BigDecimal salarioFunc = BigDecimal.ZERO;
     private Integer perfil;
     private String senha;

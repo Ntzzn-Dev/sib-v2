@@ -20,12 +20,14 @@ CREATE TABLE funcionarios (
     pessoa_cpf VARCHAR(11) NOT NULL,
     salario DECIMAL(8,2) NOT NULL CONSTRAINT df_funcionarios_salario DEFAULT 0,
     perfil INT NOT NULL CONSTRAINT df_funcionarios_perfil DEFAULT 1,
+    email VARCHAR(254) NULL,
     senha VARCHAR(255) NOT NULL,
     CONSTRAINT pk_funcionarios PRIMARY KEY (pessoa_cpf),
     CONSTRAINT fk_pessoas_funcionarios FOREIGN KEY (pessoa_cpf) REFERENCES pessoas(cpf),
     CONSTRAINT ck_funcionarios_salario CHECK (salario >= 0),
     CONSTRAINT ck_funcionarios_perfil CHECK (perfil IN (0,1)),
-    CONSTRAINT ck_funcionarios_senha CHECK (LEN(LTRIM(RTRIM(senha))) > 0)
+    CONSTRAINT ck_funcionarios_senha CHECK (LEN(LTRIM(RTRIM(senha))) > 0),
+    CONSTRAINT uq_funcionarios_email UNIQUE (email)
 );
 GO
 

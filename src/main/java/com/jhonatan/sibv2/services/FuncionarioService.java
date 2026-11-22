@@ -8,6 +8,7 @@ import com.jhonatan.sibv2.repositories.FuncionarioRepository;
 import com.jhonatan.sibv2.utils.FormatadorDocumento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -38,6 +39,8 @@ public class FuncionarioService {
 
     public FuncionarioResponse criar(FuncionarioRequest request) {
         String cpf = FormatadorDocumento.normalizarCpf(request.getCpfPessoa());
+        String email = validarEmail(request.getEmail());
+        validarEmailDisponivel(email, cpf);
         Endereco end = enderecoService.buscarReferencia(request.getEndPessoa());
         String senha = senhaObrigatoria(request.getSenha());
         boolean primeiroFuncionario = funcionarioRepository.count() == 0;
@@ -49,29 +52,36 @@ public class FuncionarioService {
         funcionario.setCpfPessoa(cpf);
         funcionario.setNomePessoa(request.getNomePessoa());
         funcionario.setTelPessoa(request.getTelPessoa());
+        funcionario.setEmail(email);
         funcionario.setSalarioFunc(request.getSalarioFunc());
         funcionario.setEndPessoa(end);
         funcionario.setSenha(senha);
         funcionario.setPerfil(perfil);
 
         Funcionario criado = funcionarioRepository.save(funcionario);
-        enderecoService.associarPessoa(criado.getEndPessoa(), criado.getCpfPessoa());
+        enderecoService.associarPessoa(end, criado.getCpfPessoa());
 
         return mapearResposta(criado);
     }
 
+    @Transactional
     public FuncionarioResponse editar(String cpf, FuncionarioRequest request) {
         Funcionario funcionario = buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf));
+        String email = validarEmail(request.getEmail());
+        validarEmailDisponivel(email, funcionario.getCpfPessoa());
 
+        Endereco enderecoAnterior = enderecoService.buscarPorPessoa(funcionario.getCpfPessoa());
         Endereco end = enderecoService.buscarReferencia(request.getEndPessoa());
-        String senha = senhaObrigatoria(request.getSenha());
         int perfilAnterior = funcionario.getPerfil();
 
         funcionario.setNomePessoa(request.getNomePessoa());
         funcionario.setTelPessoa(request.getTelPessoa());
+        funcionario.setEmail(email);
         funcionario.setSalarioFunc(request.getSalarioFunc());
         funcionario.setEndPessoa(end);
-        funcionario.setSenha(senha);
+        if (request.getSenha() != null && !request.getSenha().isBlank()) {
+            funcionario.setSenha(request.getSenha());
+        }
 
         if (request.getPerfil() != null) {
             funcionario.setPerfil(perfilValidoOuPadrao(request.getPerfil()));
@@ -84,7 +94,10 @@ public class FuncionarioService {
         }
 
         Funcionario atualizado = funcionarioRepository.save(funcionario);
-        enderecoService.associarPessoa(atualizado.getEndPessoa(), atualizado.getCpfPessoa());
+        if (enderecoAnterior != null && (end == null || enderecoAnterior.getCodEnd() != end.getCodEnd())) {
+            enderecoService.desassociarPessoa(enderecoAnterior, atualizado.getCpfPessoa());
+        }
+        enderecoService.associarPessoa(end, atualizado.getCpfPessoa());
 
         return mapearResposta(atualizado);
     }
@@ -116,13 +129,12 @@ public class FuncionarioService {
         response.setCpfPessoa(FormatadorDocumento.formatarCpf(funcionario.getCpfPessoa()));
         response.setNomePessoa(funcionario.getNomePessoa());
         response.setTelPessoa(funcionario.getTelPessoa());
+        response.setEmail(funcionario.getEmail());
         response.setSalarioFunc(funcionario.getSalarioFunc());
         response.setPerfil(funcionario.getPerfil());
-        var endereco = funcionario.getEndPessoa() != null ? funcionario.getEndPessoa()
-                : enderecoService.buscarPorPessoa(funcionario.getCpfPessoa());
-        if (endereco != null) {
-            response.setEndPessoa(enderecoService.mapearResposta(endereco));
-        }
+        var endereco = enderecoService.buscarPorPessoa(funcionario.getCpfPessoa());
+        if (endereco == null) endereco = funcionario.getEndPessoa();
+        if (endereco != null) response.setEndPessoa(enderecoService.mapearResposta(endereco));
         return response;
     }
 
@@ -150,5 +162,23 @@ public class FuncionarioService {
                     "A senha do funcionário é obrigatória.");
         }
         return senha;
+    }
+
+    private String validarEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O e-mail do funcionário é obrigatório.");
+        }
+        String normalizado = email.trim().toLowerCase(Locale.ROOT);
+        if (!normalizado.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe um e-mail válido.");
+        }
+        return normalizado;
+    }
+
+    private void validarEmailDisponivel(String email, String cpf) {
+        funcionarioRepository.findByEmailIgnoreCase(email)
+                .filter(outro -> !outro.getCpfPessoa().equals(cpf))
+                .ifPresent(outro -> { throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Este e-mail já está cadastrado para outro funcionário."); });
     }
 }
