@@ -17,7 +17,7 @@ public class Venda {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cod_venda")
     private int codVenda;
-    @Column(name = "data")
+    @Column(name = "data_venda")
     private java.time.LocalDateTime dataVenda;
     @ManyToOne
     @JoinColumn(name = "cpf_cliente", referencedColumnName = "pessoa_cpf")

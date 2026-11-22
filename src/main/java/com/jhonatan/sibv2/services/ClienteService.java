@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Service
 public class ClienteService {
@@ -43,7 +44,7 @@ public class ClienteService {
             response.setTotalVendas(((Number) linha[1]).intValue());
             response.setVendasFinalizadas(((Number) linha[2]).intValue());
             response.setTotalGasto((BigDecimal) linha[3]);
-            response.setUltimaVenda(linha[4] == null ? null : ((Timestamp) linha[4]).toLocalDateTime());
+            response.setUltimaVenda(dataHora(linha[4]));
             return response;
         }).toList();
     }
@@ -108,7 +109,7 @@ public class ClienteService {
             response.setTotalVendas(((Number) resumo[0]).intValue());
             response.setVendasFinalizadas(((Number) resumo[1]).intValue());
             response.setTotalGasto((BigDecimal) resumo[2]);
-            response.setUltimaVenda(resumo[3] == null ? null : ((Timestamp) resumo[3]).toLocalDateTime());
+            response.setUltimaVenda(dataHora(resumo[3]));
         }
 
         var endereco = cliente.getEndPessoa() != null
@@ -120,6 +121,13 @@ public class ClienteService {
         }
 
         return response;
+    }
+
+    private LocalDateTime dataHora(Object valor) {
+        if (valor == null) return null;
+        if (valor instanceof LocalDateTime dataHora) return dataHora;
+        if (valor instanceof Timestamp timestamp) return timestamp.toLocalDateTime();
+        throw new IllegalStateException("Tipo de data e hora inesperado: " + valor.getClass().getName());
     }
 
 }

@@ -73,7 +73,7 @@ GO
 
 CREATE TABLE vendas (
     cod_venda INT IDENTITY(1,1) NOT NULL,
-    [data] DATETIME NOT NULL CONSTRAINT df_vendas_data DEFAULT GETDATE(),
+    data_venda DATETIME NOT NULL CONSTRAINT df_vendas_data DEFAULT GETDATE(),
     cpf_cliente VARCHAR(11) NOT NULL,
     cpf_funcionario VARCHAR(11) NOT NULL,
     endereco_entrega INT NULL,

@@ -131,6 +131,7 @@ public class ProdutoService {
     }
 
     private MarcaResponse mapearMarcaResposta(Marca marca) {
+        if (marca == null) return null;
         MarcaResponse response = new MarcaResponse();
         response.setCodMarca(marca.getCodMarca());
         response.setNomeMarca(marca.getNomeMarca());

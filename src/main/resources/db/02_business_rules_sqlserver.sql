@@ -58,7 +58,7 @@ BEGIN
            COUNT(v.cod_venda),
            COALESCE(SUM(CASE WHEN v.status=1 THEN 1 ELSE 0 END),0),
            COALESCE(SUM(CASE WHEN v.status=1 THEN v.valor_total ELSE 0 END),0),
-           MAX(v.[data])
+           MAX(v.data_venda)
     FROM dbo.clientes c
     LEFT JOIN dbo.vendas v ON v.cpf_cliente=c.pessoa_cpf
     WHERE c.pessoa_cpf=@cpf_cliente
@@ -70,7 +70,7 @@ GO
 /* Visão 1: resumo transacional das vendas para a interface administrativa. */
 CREATE OR ALTER VIEW dbo.vw_vendas_resumo
 AS
-SELECT v.cod_venda, v.[data], v.cpf_cliente, pc.nome AS cliente_nome,
+SELECT v.cod_venda, v.data_venda, v.cpf_cliente, pc.nome AS cliente_nome,
        v.cpf_funcionario, pf.nome AS funcionario_nome,
        v.valor_total, v.status,
        dbo.fn_venda_status_texto(v.status) AS status_texto,
@@ -121,10 +121,10 @@ BEGIN
     WHERE (@status IS NULL OR status=@status)
       AND (@q IS NULL OR cliente_nome LIKE '%' + @q + '%'
         OR funcionario_nome LIKE '%' + @q + '%'
-        OR CONVERT(VARCHAR(30),[data],120) LIKE '%' + @q + '%'
+        OR CONVERT(VARCHAR(30),data_venda,120) LIKE '%' + @q + '%'
         OR CONVERT(VARCHAR(40),valor_total) LIKE '%' + @q + '%'
         OR status_texto LIKE '%' + @q + '%')
-    ORDER BY [data] DESC,cod_venda DESC;
+    ORDER BY data_venda DESC,cod_venda DESC;
 END;
 GO
 
