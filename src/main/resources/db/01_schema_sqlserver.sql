@@ -115,3 +115,10 @@ CREATE TABLE venda_pagamento (
     CONSTRAINT ck_venda_pagamento_valor CHECK (valor_pago >= 0)
 );
 GO
+
+CREATE TABLE configuracao_email (
+    cod_configuracao INT NOT NULL PRIMARY KEY,
+    email_remetente VARCHAR(254) NOT NULL,
+    senha_app VARCHAR(100) NOT NULL
+);
+GO

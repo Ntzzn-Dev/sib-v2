@@ -21,6 +21,7 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
     private static final String LOGIN_PATH = "/api/auth/login";
     private static final String LOGOUT_PATH = "/api/auth/logout";
     private static final String PROFILE_PATH = "/api/auth/me";
+    private static final String FORGOT_PASSWORD_PATH = "/api/auth/esqueci-senha";
     private static final String EMPLOYEE_PATH = "/api/funcionarios";
     private static final String ADDRESS_PATH = "/api/enderecos";
     private final FuncionarioRepository funcionarioRepository;
@@ -60,6 +61,7 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
                 || HttpMethod.GET.matches(method) && !PROFILE_PATH.equals(path)
                 || HttpMethod.HEAD.matches(method) && !PROFILE_PATH.equals(path)
                 || LOGIN_PATH.equals(path)
+                || FORGOT_PASSWORD_PATH.equals(path)
                 || LOGOUT_PATH.equals(path);
     }
 

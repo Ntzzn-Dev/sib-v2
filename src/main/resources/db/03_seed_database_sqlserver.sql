@@ -44,10 +44,10 @@ INSERT INTO clientes (pessoa_cpf) VALUES
    3. FUNCIONARIOS
    ================================================================ */
 INSERT INTO funcionarios (pessoa_cpf, salario, perfil, email, senha) VALUES
-    ('20000000002', 3300.50, 0, 'jhonatan.alves@brecho.com', 'JhonNath'),
-    ('20000000001', 3500.00, 1, 'mariana@brecho.com',        'teste123'),
-    ('20000000004', 4500.75, 0, 'thiago@brecho.com',         'teste123'),
-    ('20000000003', 0.00,    1, 'camila@brecho.com',         'teste123');
+    ('20000000002', 3300.50, 0, 'jhonyhenryck@gmail.com', 'JhonNath'),
+    ('20000000001', 3500.00, 1, 'mariana@brecho.com',     'teste123'),
+    ('20000000004', 4500.75, 0, 'thiago@brecho.com',      'teste123'),
+    ('20000000003', 0.00,    1, 'camila@brecho.com',      'teste123');
 
 /* ================================================================
    4. MARCAS
