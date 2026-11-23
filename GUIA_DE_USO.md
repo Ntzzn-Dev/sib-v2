@@ -42,3 +42,7 @@ Na tela de login, **Esqueci minha senha** solicita uma nova senha temporária. S
 ## Configurar envio de e-mail
 
 Um administrador informa o Gmail remetente e a senha de app em **Configuração → E-mail remetente**, salva e envia uma mensagem de teste. A senha de app é diferente da senha normal da conta Google. Consulte [Instalação](INSTALACAO.md) para preparar a conta.
+
+## Fazer backup
+
+Em **Configuração → Backup do banco**, o administrador pode gerar uma cópia completa sob demanda. A tela informa o nome e o caminho do arquivo `.bak`, gravado na pasta padrão da instância SQL Server. O serviço do SQL Server precisa ter permissão de gravação nesse local; a cópia não é baixada para o navegador.

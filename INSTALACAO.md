@@ -56,3 +56,7 @@ Sem remetente configurado, a recuperação de senha não consegue enviar a mensa
 ## Primeiro acesso
 
 Com uma base vazia, crie o primeiro funcionário pelo fluxo de cadastro. Esse cadastro se torna administrador. Em uma base populada pelo seed, use um dos funcionários de demonstração definidos no próprio `03_seed_database_sqlserver.sql` e altere os dados conforme necessário.
+
+## Backup e restauração
+
+O backend e o serviço SQL Server precisam acessar a mesma pasta padrão de backup da instância para importar e restaurar arquivos. A conta que executa o backend precisa conseguir gravar nela, e a conta de serviço do SQL Server precisa conseguir ler os arquivos. A tela aceita arquivos de até 2 GB. Consulte [Backup e restauração](BACKUP_RESTORE.md) antes de restaurar, pois essa operação substitui o conteúdo atual de `brecho`.

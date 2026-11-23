@@ -7,6 +7,9 @@
 - O interceptor valida o funcionário da sessão no banco e aplica as permissões por perfil.
 - Leituras `GET` são públicas no backend atual. Proteja o serviço e a rede de acordo com o ambiente em que for publicado.
 - Respostas de funcionários não incluem senha.
+- A rota de backup é uma operação administrativa e o endpoint também é bloqueado para atendentes pelo interceptor do backend.
+- A conta usada pela API precisa ter permissão para executar backup e restauração no SQL Server. O serviço SQL Server precisa ter permissão de escrita na pasta padrão de backup.
+- Restaurar um arquivo substitui o banco `brecho` e desconecta as sessões ativas. A interface exige digitar `RESTAURAR`, e o backend confere o banco de origem e valida o arquivo antes de executar a restauração.
 
 ## E-mail e recuperação
 

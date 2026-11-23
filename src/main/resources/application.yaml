@@ -2,6 +2,11 @@ spring:
   application:
     name: sib-v2
 
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+
   datasource:
     url: jdbc:sqlserver://DESKTOP-KLGKUVQ:1433;databaseName=brecho;encrypt=true;trustServerCertificate=true;integratedSecurity=true;authenticationScheme=NativeAuthentication
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver

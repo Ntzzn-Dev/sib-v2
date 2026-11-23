@@ -22,6 +22,7 @@ Por padrão a API usa [http://localhost:8080](http://localhost:8080) e o banco `
 - Venda em aberto, seleção de produtos, pagamentos, cancelamento.
 - Consulta de endereço por CEP e recuperação de senha enviada por e-mail.
 - Relatórios apoiados por views, funções, procedures e triggers do SQL Server.
+- Backup manual e restauração de arquivo `.bak`, disponíveis na área de configuração do administrador.
 
 O primeiro funcionário cadastrado recebe perfil de administrador. O atendente pode operar vendas e cadastrar clientes e endereços; operações administrativas ficam restritas ao administrador. As leituras da API são públicas no estado atual do interceptor.
 
@@ -37,5 +38,6 @@ O primeiro funcionário cadastrado recebe perfil de administrador. O atendente p
 | [Recursos SQL](RECURSOS_SQL.md) | Views, funções, procedures e triggers |
 | [Regras de negócio](REGRAS_DE_NEGOCIO.md) | Restrições dos cadastros e das vendas |
 | [Segurança](SEGURANCA.md) | Autenticação, autorização e credenciais |
+| [Backup e restauração](BACKUP_RESTORE.md) | Procedimento manual no SQL Server |
 
 O escopo e os scripts SQL estão em `src/main/resources/db`.

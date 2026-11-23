@@ -45,6 +45,15 @@ As rotas de lista aceitam `?q=termo` quando indicado. Funcionários são identif
 
 Os corpos completos variam por DTO. Use os nomes `clienteCpf`, `funcionarioCpf`, `codigos`, `metodoPagamentoId` e `valorPago`; os exemplos de campos e vínculos podem ser consultados em `src/main/java/com/jhonatan/sibv2/dto/requests`.
 
+## Backup manual
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| `POST` | `/backup` | Administrador | Cria um backup completo sob demanda do banco conectado |
+| `POST` | `/backup/restaurar` | Administrador | Recebe um arquivo multipart `.bak` e restaura o banco `brecho` |
+
+A resposta do backup informa `arquivo`, `caminho` e `criadoEm`. O arquivo `.bak` é gravado pelo SQL Server na pasta padrão de backup da instância; a API não transfere esse arquivo para o navegador. A restauração recebe o campo `arquivo` em `multipart/form-data`, valida que o conteúdo é um backup completo de `brecho` e substitui os dados atuais. A conta conectada precisa ter permissão de backup/restauração e a API e o serviço SQL Server precisam acessar a pasta padrão.
+
 ## Sessão e autorização
 
 - Consultas `GET` e rotas públicas de autenticação podem ser chamadas sem login.
