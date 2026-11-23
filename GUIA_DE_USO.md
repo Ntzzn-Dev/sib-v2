@@ -35,6 +35,8 @@ Uma venda paga ou cancelada não pode receber novas alterações. Os status usad
 
 Na operação, o atendente pode cadastrar clientes e endereços. O administrador mantém os cadastros de funcionários, produtos, marcas, categorias e métodos de pagamento. Uma venda referencia cliente e funcionário; os produtos vendidos ficam vinculados à venda.
 
+> **Aviso sobre CPF:** para não impedir o uso de dados fictícios nos testes e na demonstração, o sistema ainda não confere os dígitos verificadores do CPF. Ele apenas remove a pontuação e exige que o valor tenha 11 dígitos. Portanto, os CPFs usados nos testes não precisam corresponder a documentos reais, mas devem respeitar esse formato.
+
 ## Perfil e senha
 
 Em **Meu perfil**, o funcionário pode atualizar seus dados, telefone, endereço e senha. Para manter a senha atual, deixe o campo de senha vazio.

@@ -39,5 +39,6 @@ O primeiro funcionário cadastrado recebe perfil de administrador. O atendente p
 | [Regras de negócio](REGRAS_DE_NEGOCIO.md) | Restrições dos cadastros e das vendas |
 | [Segurança](SEGURANCA.md) | Autenticação, autorização e credenciais |
 | [Backup e restauração](BACKUP_RESTORE.md) | Procedimento manual no SQL Server |
+| [Melhorias futuras](MELHORIAS_FUTURAS.md) | Evoluções propostas para próximas versões |
 
 O escopo e os scripts SQL estão em `src/main/resources/db`.
