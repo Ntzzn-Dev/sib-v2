@@ -8,4 +8,5 @@ import lombok.NoArgsConstructor;
 public class CategoriaResponse {
     private int codCat;
     private String nomeCat;
+    private boolean ativo;
 }

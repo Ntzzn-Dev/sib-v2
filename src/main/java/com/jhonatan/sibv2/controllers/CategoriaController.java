@@ -21,8 +21,9 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public List<CategoriaResponse> listar(@RequestParam(required = false) String q) {
-        return categorias.listar(q);
+    public List<CategoriaResponse> listar(@RequestParam(required = false) String q,
+                                          @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return categorias.listar(q, incluirInativos);
     }
 
     @GetMapping("/{id}")
@@ -45,4 +46,7 @@ public class CategoriaController {
     public void apagar(@PathVariable int id) {
         categorias.apagar(id);
     }
+
+    @PostMapping("/{id}/reativar")
+    public CategoriaResponse reativar(@PathVariable int id) { return categorias.reativar(id); }
 }

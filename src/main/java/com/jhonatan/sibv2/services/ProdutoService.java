@@ -36,14 +36,16 @@ public class ProdutoService {
         this.entityManager = entityManager;
     }
 
-    public List<ProdutoResponse> listar(String pesquisa, Boolean vendido) {
+    public List<ProdutoResponse> listar(String pesquisa, Boolean vendido, boolean incluirInativos) {
         String termo = pesquisa == null || pesquisa.isBlank() ? null : pesquisa.trim();
 
         StoredProcedureQuery query = entityManager.createStoredProcedureQuery("dbo.sp_produtos_listar");
         query.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
         query.registerStoredProcedureParameter("vendido", Boolean.class, ParameterMode.IN);
+        query.registerStoredProcedureParameter("incluir_inativos", Boolean.class, ParameterMode.IN);
         query.setParameter("q", termo);
         query.setParameter("vendido", vendido);
+        query.setParameter("incluir_inativos", incluirInativos);
         @SuppressWarnings("unchecked")
         List<Number> resultados = query.getResultList();
 
@@ -92,12 +94,26 @@ public class ProdutoService {
 
     public void apagar(int id) {
         Produto produto = buscarEntidadeObrigatoria(id);
-        produtoRepository.delete(produto);
+        if (produto.getVendaProd() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Produto vinculado a uma venda não pode ser desativado.");
+        }
+        produto.setAtivo(false);
+        produtoRepository.save(produto);
+    }
+
+    public ProdutoResponse reativar(int id) {
+        Produto produto = produtoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        produto.setAtivo(true);
+        return mapearResposta(produtoRepository.save(produto));
     }
 
     public Produto buscarEntidadeObrigatoria(int id) {
-        return produtoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
+        Produto produto = produtoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        if (!produto.isAtivo()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado");
+        return produto;
     }
 
     private Marca buscarMarca(ProdutoRequest request) {
@@ -127,6 +143,7 @@ public class ProdutoService {
 
         response.setDisponivel((Boolean) disponibilidade.getSingleResult());
         response.setPrecoProd(produto.getPrecoProd());
+        response.setAtivo(produto.isAtivo());
         return response;
     }
 

@@ -35,6 +35,11 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
         if (isPublicRequest(request) || isBootstrapSignup(request)) {
             return true;
         }
+        if (Boolean.parseBoolean(request.getParameter("incluirInativos")) && !isAdministrator(request)) {
+            if (isLoggedIn(request)) sendForbidden(response);
+            else sendUnauthorized(response);
+            return false;
+        }
         if (PROFILE_PATH.equals(request.getRequestURI())
                 && (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.PUT.matches(request.getMethod()))
                 && isLoggedIn(request)) {
@@ -77,14 +82,15 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
         if (session == null) return false;
         Object cpf = session.getAttribute(AUTHENTICATED_EMPLOYEE);
         if (!(cpf instanceof String cpfValue)) return false;
-        return funcionarioRepository.existsById(FormatadorDocumento.normalizarCpf(cpfValue));
+        return funcionarioRepository.findById(FormatadorDocumento.normalizarCpf(cpfValue))
+                .map(Funcionario::isAtivo).orElse(false);
     }
 
     private boolean isBootstrapSignup(HttpServletRequest request) {
         return HttpMethod.POST.matches(request.getMethod())
                 && (EMPLOYEE_PATH.equals(request.getRequestURI())
                 || ADDRESS_PATH.equals(request.getRequestURI()))
-                && funcionarioRepository.count() == 0;
+                && funcionarioRepository.countByAtivoTrue() == 0;
     }
 
     private boolean isAllowedAttendantMutation(HttpServletRequest request) {
@@ -116,6 +122,7 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
         if (!(cpf instanceof String cpfValue)) return false;
         String normalizedCpf = FormatadorDocumento.normalizarCpf(cpfValue);
         return funcionarioRepository.findById(normalizedCpf)
+                .filter(Funcionario::isAtivo)
                 .map(Funcionario::getPerfil)
                 .filter(perfil -> perfil == Funcionario.PERFIL_ADMIN)
                 .isPresent();

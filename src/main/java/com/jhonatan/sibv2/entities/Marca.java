@@ -15,4 +15,6 @@ public class Marca {
     private int codMarca;
     @Column(name = "nome", length = 50, nullable = false)
     private String nomeMarca;
+    @Column(name = "ativo", nullable = false)
+    private boolean ativo = true;
 }

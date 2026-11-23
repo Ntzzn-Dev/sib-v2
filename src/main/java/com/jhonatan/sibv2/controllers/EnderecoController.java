@@ -25,8 +25,9 @@ public class EnderecoController {
     }
 
     @GetMapping
-    public List<EnderecoResponse> listar(@RequestParam(required = false) String q) {
-        return enderecos.listar(q);
+    public List<EnderecoResponse> listar(@RequestParam(required = false) String q,
+                                         @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return enderecos.listar(q, incluirInativos);
     }
 
     @GetMapping("/ufs")
@@ -59,4 +60,7 @@ public class EnderecoController {
     public void apagar(@PathVariable int id) {
         enderecos.apagar(id);
     }
+
+    @PostMapping("/{id}/reativar")
+    public EnderecoResponse reativar(@PathVariable int id) { return enderecos.reativar(id); }
 }

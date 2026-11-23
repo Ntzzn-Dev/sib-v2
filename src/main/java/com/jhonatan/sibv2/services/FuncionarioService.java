@@ -24,9 +24,10 @@ public class FuncionarioService {
         this.enderecoService = enderecoService;
     }
 
-    public List<FuncionarioResponse> listar(String pesquisa) {
+    public List<FuncionarioResponse> listar(String pesquisa, boolean incluirInativos) {
         String termo = pesquisa == null || pesquisa.isBlank() ? null : pesquisa.trim();
-        List<Funcionario> funcionarios = funcionarioRepository.findAll();
+        List<Funcionario> funcionarios = funcionarioRepository.findAll().stream()
+                .filter(funcionario -> incluirInativos || funcionario.isAtivo()).toList();
         return funcionarios.stream()
                 .filter(funcionario -> termo == null || corresponde(funcionario, termo))
                 .map(this::mapearResposta)
@@ -43,7 +44,7 @@ public class FuncionarioService {
         validarEmailDisponivel(email, cpf);
         Endereco end = enderecoService.buscarReferencia(request.getEndPessoa());
         String senha = senhaObrigatoria(request.getSenha());
-        boolean primeiroFuncionario = funcionarioRepository.count() == 0;
+        boolean primeiroFuncionario = funcionarioRepository.countByAtivoTrue() == 0;
         int perfil = primeiroFuncionario
                 ? Funcionario.PERFIL_ADMIN
                 : perfilValidoOuPadrao(request.getPerfil());
@@ -90,7 +91,7 @@ public class FuncionarioService {
         }
 
         if(perfilAnterior == Funcionario.PERFIL_ADMIN) {
-            minimoAdmin(funcionario);
+            validarMinimoAdministradorAoEditar(funcionario);
         }
 
         Funcionario atualizado = funcionarioRepository.save(funcionario);
@@ -104,13 +105,26 @@ public class FuncionarioService {
 
     public void apagar(String cpf) {
         Funcionario funcionario = buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf));
-        minimoAdmin(funcionario);
-        funcionarioRepository.delete(funcionario);
+        if (funcionario.getPerfil() == Funcionario.PERFIL_ADMIN && !existeOutroAdministrador(funcionario)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O sistema precisa manter ao menos um administrador.");
+        }
+        funcionario.setAtivo(false);
+        funcionarioRepository.save(funcionario);
+    }
+
+    public FuncionarioResponse reativar(String cpf) {
+        Funcionario funcionario = funcionarioRepository.findById(FormatadorDocumento.normalizarCpf(cpf))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado"));
+        funcionario.setAtivo(true);
+        return mapearResposta(funcionarioRepository.save(funcionario));
     }
 
     public Funcionario buscarEntidadeObrigatoria(String cpf) {
-        return funcionarioRepository.findById(cpf).orElseThrow(() -> new ResponseStatusException(
+        Funcionario funcionario = funcionarioRepository.findById(cpf).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Funcionário não encontrado"));
+        if (!funcionario.isAtivo()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado");
+        return funcionario;
     }
 
     private boolean corresponde(Funcionario funcionario, String pesquisa) {
@@ -132,6 +146,7 @@ public class FuncionarioService {
         response.setEmail(funcionario.getEmail());
         response.setSalarioFunc(funcionario.getSalarioFunc());
         response.setPerfil(funcionario.getPerfil());
+        response.setAtivo(funcionario.isAtivo());
         var endereco = enderecoService.buscarPorPessoa(funcionario.getCpfPessoa());
         if (endereco == null) endereco = funcionario.getEndPessoa();
         if (endereco != null) response.setEndPessoa(enderecoService.mapearResposta(endereco));
@@ -146,14 +161,18 @@ public class FuncionarioService {
         return perfil;
     }
 
-    private void minimoAdmin(Funcionario funcionario){
-        if (funcionario.getPerfil() != Funcionario.PERFIL_ADMIN
-                && funcionarioRepository.findAll().stream().noneMatch(outro ->
-                !outro.getCpfPessoa().equals(funcionario.getCpfPessoa())
-                        && outro.getPerfil() == Funcionario.PERFIL_ADMIN)) {
+    private void validarMinimoAdministradorAoEditar(Funcionario funcionario) {
+        if (funcionario.getPerfil() != Funcionario.PERFIL_ADMIN && !existeOutroAdministrador(funcionario)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "O sistema precisa manter ao menos um administrador.");
         }
+    }
+
+    private boolean existeOutroAdministrador(Funcionario funcionario) {
+        return funcionarioRepository.findAll().stream().anyMatch(outro ->
+                outro.isAtivo()
+                        && !outro.getCpfPessoa().equals(funcionario.getCpfPessoa())
+                        && outro.getPerfil() == Funcionario.PERFIL_ADMIN);
     }
 
     private String senhaObrigatoria(String senha) {

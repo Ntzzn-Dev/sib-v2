@@ -47,7 +47,9 @@ public class MetodoPagamentoService {
     }
 
     public void apagar(int id) {
-        metodoPagamentoRepository.delete(buscarObrigatorio(id));
+        MetodoPagamento metodo = buscarObrigatorio(id);
+        metodo.setActiveMetodoPag(false);
+        metodoPagamentoRepository.save(metodo);
     }
 
     private MetodoPagamento buscarObrigatorio(int id) {

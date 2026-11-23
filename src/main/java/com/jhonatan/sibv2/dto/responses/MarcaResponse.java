@@ -8,4 +8,5 @@ import lombok.NoArgsConstructor;
 public class MarcaResponse {
     private int codMarca;
     private String nomeMarca;
+    private boolean ativo;
 }

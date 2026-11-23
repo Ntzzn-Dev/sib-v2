@@ -50,3 +50,7 @@ erDiagram
 - Valores monetários usam `DECIMAL`; telefones e CPFs são armazenados como texto para preservar os dígitos.
 
 Veja [DICIONARIO_DE_DADOS.md](DICIONARIO_DE_DADOS.md) para colunas e [RECURSOS_SQL.md](RECURSOS_SQL.md) para objetos do banco.
+
+## Exclusão lógica
+
+Clientes, funcionários, endereços, marcas, categorias e produtos possuem a coluna `ativo`, criada diretamente no script de criação do schema (`01_schema_sqlserver.sql`). A aplicação marca esses registros como inativos (`ativo = 0`) em vez de removê-los fisicamente. As listagens operacionais e as validações de novos vínculos ignoram esses registros, enquanto as linhas e referências históricas permanecem no banco. Métodos de pagamento já possuem a coluna `is_active`, usada para impedir que métodos desativados sejam usados em novos pagamentos. Vendas mantêm seu próprio ciclo de status, incluindo cancelamento.

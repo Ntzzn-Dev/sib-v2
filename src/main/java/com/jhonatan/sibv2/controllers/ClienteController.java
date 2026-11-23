@@ -21,8 +21,9 @@ public class ClienteController {
     }
 
     @GetMapping
-    public List<ClienteResponse> listar(@RequestParam(required = false) String q) {
-        return clientes.listar(q);
+    public List<ClienteResponse> listar(@RequestParam(required = false) String q,
+                                        @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return clientes.listar(q, incluirInativos);
     }
 
     @GetMapping("/{cpf}")
@@ -45,4 +46,7 @@ public class ClienteController {
     public void apagar(@PathVariable String cpf) {
         clientes.apagar(cpf);
     }
+
+    @PostMapping("/{cpf}/reativar")
+    public ClienteResponse reativar(@PathVariable String cpf) { return clientes.reativar(cpf); }
 }

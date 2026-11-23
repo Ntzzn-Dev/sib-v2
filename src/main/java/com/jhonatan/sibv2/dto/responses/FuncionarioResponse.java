@@ -14,4 +14,5 @@ public class FuncionarioResponse {
     private BigDecimal salarioFunc;
     private int perfil;
     private EnderecoResponse endPessoa;
+    private boolean ativo;
 }

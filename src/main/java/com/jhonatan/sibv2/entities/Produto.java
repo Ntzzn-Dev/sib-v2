@@ -26,6 +26,8 @@ public class Produto {
     private Categoria catProd;
     @Column(name = "is_selled")
     private boolean isSelled;
+    @Column(name = "ativo", nullable = false)
+    private boolean ativo = true;
     @Column(name = "preco")
     private BigDecimal precoProd = BigDecimal.ZERO;
     @ManyToOne

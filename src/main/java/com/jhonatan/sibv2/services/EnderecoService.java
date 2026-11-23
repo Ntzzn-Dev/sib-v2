@@ -51,8 +51,8 @@ public class EnderecoService {
         this.enderecoRepository = enderecoRepository;
     }
 
-    public List<EnderecoResponse> listar(String pesquisa) {
-        return enderecoRepository.findAll().stream()
+    public List<EnderecoResponse> listar(String pesquisa, boolean incluirInativos) {
+        return enderecoRepository.findAll().stream().filter(endereco -> incluirInativos || endereco.isAtivo())
                 .filter(endereco -> pesquisa == null || pesquisa.isBlank() || corresponde(endereco, pesquisa))
                 .map(this::mapearResposta)
                 .toList();
@@ -105,7 +105,16 @@ public class EnderecoService {
     }
 
     public void apagar(int id) {
-        enderecoRepository.delete(buscarObrigatorio(id));
+        Endereco endereco = buscarObrigatorio(id);
+        endereco.setAtivo(false);
+        enderecoRepository.save(endereco);
+    }
+
+    public EnderecoResponse reativar(int id) {
+        Endereco endereco = enderecoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Endereço não encontrado"));
+        endereco.setAtivo(true);
+        return mapearResposta(enderecoRepository.save(endereco));
     }
 
     public Endereco buscarReferencia(EnderecoRequest request) {
@@ -116,7 +125,7 @@ public class EnderecoService {
     }
 
     public Endereco buscarPorPessoa(String cpfPessoa) {
-        return enderecoRepository.findFirstByCpfPessoa(cpfPessoa).orElse(null);
+        return enderecoRepository.findFirstByCpfPessoaAndAtivoTrue(cpfPessoa).orElse(null);
     }
 
     public void associarPessoa(Endereco endereco, String cpfPessoa) {
@@ -160,8 +169,10 @@ public class EnderecoService {
     }
 
     private Endereco buscarObrigatorio(int id) {
-        return enderecoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
+        Endereco endereco = enderecoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Endereço não encontrado"));
+        if (!endereco.isAtivo()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Endereço não encontrado");
+        return endereco;
     }
 
     private boolean corresponde(Endereco endereco, String q) {
@@ -186,6 +197,7 @@ public class EnderecoService {
         response.setLogradouro(endereco.getLogradouro());
         response.setNumero(endereco.getNumero());
         response.setComplemento(endereco.getComplemento());
+        response.setAtivo(endereco.isAtivo());
         return response;
     }
 

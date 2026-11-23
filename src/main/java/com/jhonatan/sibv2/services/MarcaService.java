@@ -19,8 +19,8 @@ public class MarcaService {
         this.marcaRepository = marcaRepository;
     }
 
-    public List<MarcaResponse> listar(String pesquisa) {
-        return marcaRepository.findAll().stream()
+    public List<MarcaResponse> listar(String pesquisa, boolean incluirInativos) {
+        return marcaRepository.findAll().stream().filter(marca -> incluirInativos || marca.isAtivo())
                 .filter(marca -> pesquisa == null || pesquisa.isBlank()
                         || contem(marca.getNomeMarca(), pesquisa))
                 .map(this::mapearResposta)
@@ -44,11 +44,21 @@ public class MarcaService {
     }
 
     public void apagar(int id) {
-        marcaRepository.delete(buscarEntidadeObrigatoria(id));
+        Marca marca = buscarEntidadeObrigatoria(id);
+        marca.setAtivo(false);
+        marcaRepository.save(marca);
+    }
+
+    public MarcaResponse reativar(int id) {
+        Marca marca = marcaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada"));
+        marca.setAtivo(true);
+        return mapearResposta(marcaRepository.save(marca));
     }
 
     public Marca buscarEntidadeObrigatoria(int id) {
-        return marcaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada"));
+        Marca marca = marcaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada"));
+        if (!marca.isAtivo()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada");
+        return marca;
     }
 
     private boolean contem(String valor, String q) {
@@ -59,6 +69,7 @@ public class MarcaService {
         MarcaResponse response = new MarcaResponse();
         response.setCodMarca(marca.getCodMarca());
         response.setNomeMarca(marca.getNomeMarca());
+        response.setAtivo(marca.isAtivo());
         return response;
     }
 

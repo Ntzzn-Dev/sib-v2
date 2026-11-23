@@ -28,7 +28,7 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase(Locale.ROOT);
-        Funcionario funcionario = funcionarios.findByEmailIgnoreCaseAndSenha(email, request.getSenha())
+        Funcionario funcionario = funcionarios.findByEmailIgnoreCaseAndSenhaAndAtivoTrue(email, request.getSenha())
                 .orElseThrow(this::credenciaisInvalidas);
 
         LoginResponse response = new LoginResponse();

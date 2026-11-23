@@ -31,5 +31,7 @@ public class Funcionario extends Pessoas{
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "senha", nullable = false)
     private String senha;
+    @Column(name = "ativo", nullable = false)
+    private boolean ativo = true;
 
 }

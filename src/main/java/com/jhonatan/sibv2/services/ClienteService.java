@@ -30,12 +30,14 @@ public class ClienteService {
         this.entityManager = entityManager;
     }
 
-    public List<ClienteResponse> listar(String pesquisa) {
+    public List<ClienteResponse> listar(String pesquisa, boolean incluirInativos) {
         String termo = pesquisa == null || pesquisa.isBlank() ? null : pesquisa.trim();
 
         StoredProcedureQuery consulta = entityManager.createStoredProcedureQuery("dbo.sp_clientes_listar");
         consulta.registerStoredProcedureParameter("q", String.class, ParameterMode.IN);
+        consulta.registerStoredProcedureParameter("incluir_inativos", Boolean.class, ParameterMode.IN);
         consulta.setParameter("q", termo);
+        consulta.setParameter("incluir_inativos", incluirInativos);
         @SuppressWarnings("unchecked")
         List<Object[]> linhas = consulta.getResultList();
 
@@ -84,12 +86,23 @@ public class ClienteService {
     }
 
     public void apagar(String cpf) {
-        clienteRepository.delete(buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf)));
+        Cliente cliente = buscarEntidadeObrigatoria(FormatadorDocumento.normalizarCpf(cpf));
+        cliente.setAtivo(false);
+        clienteRepository.save(cliente);
+    }
+
+    public ClienteResponse reativar(String cpf) {
+        Cliente cliente = clienteRepository.findById(FormatadorDocumento.normalizarCpf(cpf))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
+        cliente.setAtivo(true);
+        return mapearResposta(clienteRepository.save(cliente));
     }
 
     public Cliente buscarEntidadeObrigatoria(String cpf) {
-        return clienteRepository.findById(cpf).orElseThrow(() -> new ResponseStatusException(
+        Cliente cliente = clienteRepository.findById(cpf).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Cliente não encontrado"));
+        if (!cliente.isAtivo()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado");
+        return cliente;
     }
 
     public ClienteResponse mapearResposta(Cliente cliente) {
@@ -97,6 +110,7 @@ public class ClienteService {
         response.setCpfPessoa(FormatadorDocumento.formatarCpf(cliente.getCpfPessoa()));
         response.setNomePessoa(cliente.getNomePessoa());
         response.setTelPessoa(cliente.getTelPessoa());
+        response.setAtivo(cliente.isAtivo());
 
         StoredProcedureQuery consultaResumo = entityManager.createStoredProcedureQuery("dbo.sp_cliente_resumo");
         consultaResumo.registerStoredProcedureParameter("cpf_cliente", String.class, ParameterMode.IN);

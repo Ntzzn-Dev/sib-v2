@@ -14,4 +14,5 @@ public class EnderecoResponse {
     private String logradouro;
     private String numero;
     private String complemento;
+    private boolean ativo;
 }

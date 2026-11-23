@@ -20,8 +20,9 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public List<ProdutoResponse> listar(@RequestParam(required = false) String q, @RequestParam(required = false) Boolean vendido) {
-        return produtos.listar(q, vendido);
+    public List<ProdutoResponse> listar(@RequestParam(required = false) String q, @RequestParam(required = false) Boolean vendido,
+                                        @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return produtos.listar(q, vendido, incluirInativos);
     }
 
     @GetMapping("/{id}")
@@ -44,4 +45,7 @@ public class ProdutoController {
     public void apagar(@PathVariable int id) {
         produtos.apagar(id);
     }
+
+    @PostMapping("/{id}/reativar")
+    public ProdutoResponse reativar(@PathVariable int id) { return produtos.reativar(id); }
 }

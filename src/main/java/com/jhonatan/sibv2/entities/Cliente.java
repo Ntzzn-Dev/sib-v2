@@ -1,5 +1,6 @@
 package com.jhonatan.sibv2.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.PrimaryKeyJoinColumn;
@@ -13,4 +14,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Data
-public class Cliente extends Pessoas {}
+public class Cliente extends Pessoas {
+    @Column(name = "ativo", nullable = false)
+    private boolean ativo = true;
+}

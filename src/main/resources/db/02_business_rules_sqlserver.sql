@@ -22,7 +22,7 @@ AS
 BEGIN
     DECLARE @disponivel BIT = 0;
     IF EXISTS (SELECT 1 FROM dbo.produtos
-               WHERE cod_prod=@cod_prod AND cod_venda IS NULL AND is_selled=0)
+               WHERE cod_prod=@cod_prod AND ativo=1 AND cod_venda IS NULL AND is_selled=0)
         SET @disponivel = 1;
     RETURN @disponivel;
 END;
@@ -39,7 +39,7 @@ RETURN
     FROM dbo.produtos p
     LEFT JOIN dbo.marcas m ON m.cod_marca=p.cod_marca
     JOIN dbo.categorias c ON c.cod_categorias=p.cod_categoria
-    WHERE p.cod_venda IS NULL AND p.is_selled=0;
+    WHERE p.ativo=1 AND p.cod_venda IS NULL AND p.is_selled=0;
 GO
 
 /* Função multi-statement: devolve indicadores de compra de um cliente. */
@@ -88,7 +88,7 @@ GO
 /* Visão 2: catálogo, categoria, marca, situação de estoque e venda vinculada. */
 CREATE OR ALTER VIEW dbo.vw_produtos_estoque
 AS
-SELECT p.cod_prod, p.descricao, p.tamanho, p.preco, p.is_selled,
+SELECT p.cod_prod, p.descricao, p.tamanho, p.preco, p.is_selled, p.ativo,
        p.cod_venda, m.cod_marca, m.nome AS marca_nome,
        c.cod_categorias, c.nome AS categoria_nome,
        CASE WHEN dbo.fn_produto_disponivel(p.cod_prod)=1 THEN 'DISPONÍVEL'
@@ -103,10 +103,10 @@ GO
 CREATE OR ALTER VIEW dbo.vw_clientes_compras
 AS
 SELECT pe.cpf, pe.nome, pe.telefone, cr.total_vendas,
-       cr.vendas_finalizadas, cr.total_gasto, cr.ultima_venda
+       cr.vendas_finalizadas, cr.total_gasto, cr.ultima_venda, c.ativo
 FROM dbo.clientes c
 JOIN dbo.pessoas pe ON pe.cpf=c.pessoa_cpf
-CROSS APPLY dbo.fn_cliente_resumo(c.pessoa_cpf) cr;
+CROSS APPLY dbo.fn_cliente_resumo(c.pessoa_cpf) cr
 GO
 
 /* Endpoints de leitura: Java chama procedures nomeadas sem embutir SELECTs. */
@@ -147,11 +147,12 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_produtos_listar
     @q VARCHAR(100) = NULL,
-    @vendido BIT = NULL
+    @vendido BIT = NULL,
+    @incluir_inativos BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF @vendido=0
+    IF @vendido=0 AND @incluir_inativos=0
     BEGIN
         SELECT cod_prod FROM dbo.fn_produtos_disponiveis()
         WHERE @q IS NULL OR descricao LIKE '%' + @q + '%'
@@ -160,7 +161,8 @@ BEGIN
         RETURN;
     END;
     SELECT cod_prod FROM dbo.vw_produtos_estoque
-    WHERE (@vendido IS NULL OR is_selled=@vendido)
+    WHERE (@incluir_inativos=1 OR ativo=1)
+      AND (@vendido IS NULL OR is_selled=@vendido)
       AND (@q IS NULL OR descricao LIKE '%' + @q + '%'
         OR marca_nome LIKE '%' + @q + '%' OR categoria_nome LIKE '%' + @q + '%')
     ORDER BY descricao;
@@ -175,14 +177,17 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_clientes_listar @q VARCHAR(100) = NULL
+CREATE OR ALTER PROCEDURE dbo.sp_clientes_listar
+    @q VARCHAR(100) = NULL,
+    @incluir_inativos BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
     SELECT cpf,total_vendas,vendas_finalizadas,total_gasto,ultima_venda
     FROM dbo.vw_clientes_compras
-    WHERE @q IS NULL OR nome LIKE '%' + @q + '%'
-      OR cpf LIKE '%' + @q + '%' OR telefone LIKE '%' + @q + '%'
+    WHERE (@incluir_inativos=1 OR ativo=1)
+      AND (@q IS NULL OR nome LIKE '%' + @q + '%'
+        OR cpf LIKE '%' + @q + '%' OR telefone LIKE '%' + @q + '%')
     ORDER BY nome;
 END;
 GO
@@ -216,6 +221,10 @@ BEGIN
         OR UPDATE(cod_marca) OR UPDATE(cod_categoria))
        AND EXISTS (SELECT 1 FROM deleted WHERE cod_venda IS NOT NULL)
         THROW 51028, 'Produto vinculado a uma venda não pode ser alterado.', 1;
+    IF UPDATE(ativo)
+       AND EXISTS (SELECT 1 FROM deleted d JOIN inserted i ON i.cod_prod=d.cod_prod
+                   WHERE d.cod_venda IS NOT NULL AND i.ativo=0)
+        THROW 51029, 'Produto vinculado a uma venda não pode ser desativado.', 1;
     IF EXISTS (SELECT 1 FROM deleted d LEFT JOIN inserted i ON i.cod_prod=d.cod_prod
                WHERE i.cod_prod IS NULL AND d.cod_venda IS NOT NULL)
         THROW 51021, 'Produto vinculado a uma venda não pode ser excluído.', 1;
@@ -298,7 +307,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM @itens) THROW 51023, 'Informe ao menos um produto.', 1;
     IF EXISTS (SELECT 1 FROM @itens i LEFT JOIN dbo.produtos p WITH (UPDLOCK,HOLDLOCK)
                ON p.cod_prod=i.cod_prod
-               WHERE p.cod_prod IS NULL OR p.cod_venda IS NOT NULL OR p.is_selled=1)
+               WHERE p.cod_prod IS NULL OR p.ativo=0 OR p.cod_venda IS NOT NULL OR p.is_selled=1)
         THROW 51024, 'Produto inexistente ou indisponível.', 1;
     UPDATE p SET cod_venda=@venda_id
     FROM dbo.produtos p JOIN @itens i ON i.cod_prod=p.cod_prod;

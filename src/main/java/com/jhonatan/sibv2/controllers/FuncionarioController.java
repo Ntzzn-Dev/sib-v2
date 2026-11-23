@@ -23,8 +23,9 @@ public class FuncionarioController {
     }
 
     @GetMapping
-    public List<FuncionarioResponse> listar(@RequestParam(required = false) String q) {
-        return funcionarios.listar(q);
+    public List<FuncionarioResponse> listar(@RequestParam(required = false) String q,
+                                            @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return funcionarios.listar(q, incluirInativos);
     }
 
     @GetMapping("/{cpf}")
@@ -49,4 +50,7 @@ public class FuncionarioController {
     public void apagar(@PathVariable String cpf) {
         funcionarios.apagar(cpf);
     }
+
+    @PostMapping("/{cpf}/reativar")
+    public FuncionarioResponse reativar(@PathVariable String cpf) { return funcionarios.reativar(cpf); }
 }

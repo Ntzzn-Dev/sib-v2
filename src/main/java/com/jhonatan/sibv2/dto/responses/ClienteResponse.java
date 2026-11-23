@@ -16,4 +16,5 @@ public class ClienteResponse {
     private int vendasFinalizadas;
     private BigDecimal totalGasto;
     private LocalDateTime ultimaVenda;
+    private boolean ativo;
 }

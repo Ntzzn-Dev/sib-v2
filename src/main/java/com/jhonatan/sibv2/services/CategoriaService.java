@@ -19,8 +19,8 @@ public class CategoriaService {
         this.categoriaRepository = categoriaRepository;
     }
 
-    public List<CategoriaResponse> listar(String pesquisa) {
-        return categoriaRepository.findAll().stream()
+    public List<CategoriaResponse> listar(String pesquisa, boolean incluirInativos) {
+        return categoriaRepository.findAll().stream().filter(categoria -> incluirInativos || categoria.isAtivo())
                 .filter(categoria -> pesquisa == null || pesquisa.isBlank()
                         || contem(categoria.getNomeCat(), pesquisa))
                 .map(this::mapearResposta)
@@ -44,11 +44,21 @@ public class CategoriaService {
     }
 
     public void apagar(int id) {
-        categoriaRepository.delete(buscarEntidadeObrigatoria(id));
+        Categoria categoria = buscarEntidadeObrigatoria(id);
+        categoria.setAtivo(false);
+        categoriaRepository.save(categoria);
+    }
+
+    public CategoriaResponse reativar(int id) {
+        Categoria categoria = categoriaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+        categoria.setAtivo(true);
+        return mapearResposta(categoriaRepository.save(categoria));
     }
 
     public Categoria buscarEntidadeObrigatoria(int id) {
-        return categoriaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+        Categoria categoria = categoriaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+        if (!categoria.isAtivo()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada");
+        return categoria;
     }
 
     private boolean contem(String valor, String q) {
@@ -59,6 +69,7 @@ public class CategoriaService {
         CategoriaResponse response = new CategoriaResponse();
         response.setCodCat(categoria.getCodCat());
         response.setNomeCat(categoria.getNomeCat());
+        response.setAtivo(categoria.isAtivo());
         return response;
     }
 

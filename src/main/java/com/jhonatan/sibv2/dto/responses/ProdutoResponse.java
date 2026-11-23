@@ -15,4 +15,5 @@ public class ProdutoResponse {
     private boolean selled;
     private boolean disponivel;
     private BigDecimal precoProd;
+    private boolean ativo;
 }

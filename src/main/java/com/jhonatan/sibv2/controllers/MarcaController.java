@@ -19,8 +19,9 @@ public class MarcaController {
     }
 
     @GetMapping
-    public List<MarcaResponse> listar(@RequestParam(required = false) String q) {
-        return marcas.listar(q);
+    public List<MarcaResponse> listar(@RequestParam(required = false) String q,
+                                     @RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return marcas.listar(q, incluirInativos);
     }
 
     @GetMapping("/{id}")
@@ -43,4 +44,7 @@ public class MarcaController {
     public void apagar(@PathVariable int id) {
         marcas.apagar(id);
     }
+
+    @PostMapping("/{id}/reativar")
+    public MarcaResponse reativar(@PathVariable int id) { return marcas.reativar(id); }
 }

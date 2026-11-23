@@ -11,6 +11,7 @@ GO
 
 CREATE TABLE clientes (
     pessoa_cpf VARCHAR(11) NOT NULL,
+    ativo BIT NOT NULL CONSTRAINT df_clientes_ativo DEFAULT 1,
     CONSTRAINT pk_clientes PRIMARY KEY (pessoa_cpf),
     CONSTRAINT fk_pessoas_clientes FOREIGN KEY (pessoa_cpf) REFERENCES pessoas(cpf)
 );
@@ -22,6 +23,7 @@ CREATE TABLE funcionarios (
     perfil INT NOT NULL CONSTRAINT df_funcionarios_perfil DEFAULT 1,
     email VARCHAR(254) NULL,
     senha VARCHAR(255) NOT NULL,
+    ativo BIT NOT NULL CONSTRAINT df_funcionarios_ativo DEFAULT 1,
     CONSTRAINT pk_funcionarios PRIMARY KEY (pessoa_cpf),
     CONSTRAINT fk_pessoas_funcionarios FOREIGN KEY (pessoa_cpf) REFERENCES pessoas(cpf),
     CONSTRAINT ck_funcionarios_salario CHECK (salario >= 0),
@@ -34,6 +36,7 @@ GO
 CREATE TABLE marcas (
     cod_marca INT IDENTITY(1,1) NOT NULL,
     nome VARCHAR(50) NOT NULL,
+    ativo BIT NOT NULL CONSTRAINT df_marcas_ativo DEFAULT 1,
     CONSTRAINT pk_marcas PRIMARY KEY (cod_marca),
     CONSTRAINT uq_marcas_nome UNIQUE (nome)
 );
@@ -42,6 +45,7 @@ GO
 CREATE TABLE categorias (
     cod_categorias INT IDENTITY(1,1) NOT NULL,
     nome VARCHAR(50) NOT NULL,
+    ativo BIT NOT NULL CONSTRAINT df_categorias_ativo DEFAULT 1,
     CONSTRAINT pk_categorias PRIMARY KEY (cod_categorias),
     CONSTRAINT uq_categorias_nome UNIQUE (nome)
 );
@@ -66,6 +70,7 @@ CREATE TABLE endereco (
     cidade VARCHAR(50) NULL,
     cep VARCHAR(9) NULL,
     uf VARCHAR(2) NULL,
+    ativo BIT NOT NULL CONSTRAINT df_endereco_ativo DEFAULT 1,
     CONSTRAINT pk_endereco PRIMARY KEY (cod_end),
     CONSTRAINT fk_endereco_pessoa FOREIGN KEY (cpf_pessoa) REFERENCES pessoas(cpf)
 );
@@ -97,6 +102,7 @@ CREATE TABLE produtos (
     cod_venda INT NULL,
     preco DECIMAL(10,2) NOT NULL CONSTRAINT df_produtos_preco DEFAULT 0,
     is_selled BIT NOT NULL CONSTRAINT df_produtos_vendido DEFAULT 0,
+    ativo BIT NOT NULL CONSTRAINT df_produtos_ativo DEFAULT 1,
     CONSTRAINT pk_produtos PRIMARY KEY (cod_prod),
     CONSTRAINT fk_prod_marca FOREIGN KEY (cod_marca) REFERENCES marcas(cod_marca),
     CONSTRAINT fk_prod_categoria FOREIGN KEY (cod_categoria) REFERENCES categorias(cod_categorias),

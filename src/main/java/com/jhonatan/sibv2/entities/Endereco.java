@@ -29,5 +29,7 @@ public class Endereco {
     private String numero;
     @Column(length = 50)
     private String complemento;
+    @Column(name = "ativo", nullable = false)
+    private boolean ativo = true;
 
 }
