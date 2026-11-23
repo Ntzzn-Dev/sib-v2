@@ -8,6 +8,7 @@ Base local: `http://localhost:8080/api`. A API recebe e responde JSON, exceto ro
 |---|---|---|---|
 | `POST` | `/auth/login` | Público | Inicia sessão com `{ "email": "...", "senha": "..." }` |
 | `POST` | `/auth/logout` | Público | Invalida a sessão atual |
+| `GET` | `/auth/bootstrap` | Público | Informa se ainda é possível cadastrar o primeiro administrador |
 | `POST` | `/auth/esqueci-senha` | Público | Solicita senha temporária com `{ "email": "..." }` |
 | `GET` | `/auth/me` | Autenticado | Consulta perfil do usuário logado |
 | `PUT` | `/auth/me` | Autenticado | Atualiza o próprio perfil |
@@ -56,7 +57,8 @@ A resposta do backup informa `arquivo`, `caminho` e `criadoEm`. O arquivo `.bak`
 
 ## Sessão e autorização
 
-- Consultas `GET` e rotas públicas de autenticação podem ser chamadas sem login.
+- A consulta de bootstrap, a lista de UFs, a busca de CEP e as rotas públicas de autenticação podem ser chamadas sem login.
+- As demais consultas exigem sessão; a listagem e consulta de funcionários são exclusivas do administrador.
 - Sem sessão, operações protegidas respondem `401`.
 - O atendente pode criar clientes e endereços e operar vendas. Alterações administrativas exigem administrador e respondem `403` para o atendente.
 - Enquanto não houver funcionário cadastrado, o interceptor libera o primeiro cadastro de funcionário e endereço para bootstrap.

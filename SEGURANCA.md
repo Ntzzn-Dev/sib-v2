@@ -5,7 +5,7 @@
 - A autenticação usa sessão HTTP no servidor, mantida pelo cookie de sessão.
 - O frontend deve enviar cookies nas chamadas (`credentials: include`). CORS permite a origem de desenvolvimento `http://localhost:5173` com credenciais.
 - O interceptor valida o funcionário da sessão no banco e aplica as permissões por perfil.
-- Leituras `GET` são públicas no backend atual. Proteja o serviço e a rede de acordo com o ambiente em que for publicado.
+- Consultas de dados da operação exigem sessão. Sem login, ficam públicas somente as rotas de autenticação, o estado de cadastro inicial, a lista de UFs e a consulta de CEP. Funcionários e cadastros de configuração são reservados ao administrador; o atendente consulta apenas os dados necessários à operação.
 - Respostas de funcionários não incluem senha.
 - A rota de backup é uma operação administrativa e o endpoint também é bloqueado para atendentes pelo interceptor do backend.
 - A conta usada pela API precisa ter permissão para executar backup e restauração no SQL Server. O serviço SQL Server precisa ter permissão de escrita na pasta padrão de backup.

@@ -24,7 +24,7 @@ Por padrão a API usa [http://localhost:8080](http://localhost:8080) e o banco `
 - Relatórios apoiados por views, funções, procedures e triggers do SQL Server.
 - Backup manual e restauração de arquivo `.bak`, disponíveis na área de configuração do administrador.
 
-O primeiro funcionário cadastrado recebe perfil de administrador. O atendente pode operar vendas e cadastrar clientes e endereços; operações administrativas ficam restritas ao administrador. As leituras da API são públicas no estado atual do interceptor.
+O primeiro funcionário cadastrado recebe perfil de administrador. O atendente pode operar vendas e cadastrar clientes e endereços; operações administrativas ficam restritas ao administrador. Visitantes veem uma tela inicial sem dados operacionais, e as consultas privadas da API exigem sessão.
 
 ## Documentação
 

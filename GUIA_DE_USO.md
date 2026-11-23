@@ -20,6 +20,8 @@ O script de seed cria contas de demonstração. Consulte os dados atuais em `src
 
 O backend representa administrador com `perfil = 0` e atendente com `perfil = 1`. A aba de configuração é voltada ao administrador.
 
+Sem login, a tela inicial apresenta o sistema e não carrega dados operacionais. Após o login, o administrador vê o painel com indicadores; o atendente vê uma página de operação com atalhos para vendas, produtos, clientes e endereços.
+
 ## Operação de vendas
 
 1. Selecione o cliente e inicie uma venda. A venda é criada em aberto.

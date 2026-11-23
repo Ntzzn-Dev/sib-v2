@@ -20,6 +20,8 @@ import org.springframework.mail.MailException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
@@ -42,6 +44,11 @@ public class AuthController {
         LoginResponse response = auth.login(request);
         session.setAttribute(AuthSessionInterceptor.AUTHENTICATED_EMPLOYEE, response.getCpfPessoa());
         return response;
+    }
+
+    @GetMapping("/bootstrap")
+    public Map<String, Boolean> verificarCadastroInicial() {
+        return Map.of("cadastroInicial", funcionarios.count() == 0);
     }
 
     @PostMapping("/esqueci-senha")
