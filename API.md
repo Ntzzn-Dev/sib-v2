@@ -60,7 +60,7 @@ A resposta do backup informa `arquivo`, `caminho` e `criadoEm`. O arquivo `.bak`
 - A consulta de bootstrap, a lista de UFs, a busca de CEP e as rotas públicas de autenticação podem ser chamadas sem login.
 - As demais consultas exigem sessão; a listagem e consulta de funcionários são exclusivas do administrador.
 - Sem sessão, operações protegidas respondem `401`.
-- O atendente pode criar clientes e endereços e operar vendas. Alterações administrativas exigem administrador e respondem `403` para o atendente.
+- O atendente pode criar e editar clientes e endereços e operar vendas. As demais alterações administrativas exigem administrador e respondem `403` para o atendente.
 - Enquanto não houver funcionário cadastrado, o interceptor libera o primeiro cadastro de funcionário e endereço para bootstrap.
 
 ## Respostas de erro

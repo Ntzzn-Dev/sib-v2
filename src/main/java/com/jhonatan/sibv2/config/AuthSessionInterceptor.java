@@ -97,8 +97,10 @@ public class AuthSessionInterceptor implements HandlerInterceptor {
         String method = request.getMethod();
         String path = request.getRequestURI();
         if (path.equals("/api/vendas") || path.startsWith("/api/vendas/")) return true;
-        return HttpMethod.POST.matches(method)
-                && (path.equals("/api/clientes") || path.equals(ADDRESS_PATH));
+        return (HttpMethod.POST.matches(method)
+                && (path.equals("/api/clientes") || path.equals(ADDRESS_PATH)))
+                || (HttpMethod.PUT.matches(method)
+                && (belongsToResource(path, "/api/clientes") || belongsToResource(path, ADDRESS_PATH)));
     }
 
     private boolean isAllowedAttendantRead(HttpServletRequest request) {
